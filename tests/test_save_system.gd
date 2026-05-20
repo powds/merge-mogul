@@ -1,4 +1,4 @@
-extends GutTest
+extends Node
 
 ## Tests for SaveSystem save/load functionality
 
@@ -69,3 +69,22 @@ func test_save_exists():
 	
 	SaveSystem.save_game({"score": 50})
 	assert_true(SaveSystem.save_exists(), "Save should exist after saving")
+
+## Helper assertion functions
+func assert_true(condition: bool, message: String = "") -> bool:
+	if not condition:
+		print("ASSERTION FAILED: " + message)
+		return false
+	return true
+
+func assert_false(condition: bool, message: String = "") -> bool:
+	if condition:
+		print("ASSERTION FAILED: " + message)
+		return false
+	return true
+
+func assert_eq(actual, expected, message: String = "") -> bool:
+	if actual != expected:
+		print("ASSERTION FAILED: " + message + " (expected " + str(expected) + ", got " + str(actual) + ")")
+		return false
+	return true

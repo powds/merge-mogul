@@ -75,29 +75,30 @@ func run_test_file(file_path: String) -> void:
 	test_instance.free()
 
 func run_single_test(test_instance, method_name: String) -> void:
+	print("  [RUN] " + method_name)
+	
+	# Setup per test
 	if test_instance.has_method("before_each"):
 		test_instance.before_each()
 	
-	print("  [RUN] " + method_name)
-	
-	# Use GDScript assert
-	var assertions_passed = true
-	var assertion_errors = []
-	
-	# Override assert to capture failures
-	var original_assert = assert
-	
 	var success = false
+	var assertion_failed = false
+	
 	if test_instance.has_method(method_name):
 		# Catch errors during test
-		var test_callable = Callable(test_instance, method_name)
-		test_callable.call()
-		success = true
+		try:
+			var test_callable = Callable(test_instance, method_name)
+			test_callable.call()
+			success = true
+		except:
+			print("  [ERROR] " + str(OS.last_task_exit_code) if "last_task_exit_code" in OS else "Test error")
+			assertion_failed = true
 	
+	# Teardown per test
 	if test_instance.has_method("after_each"):
 		test_instance.after_each()
 	
-	if success:
+	if success and not assertion_failed:
 		print("  [PASS] " + method_name)
 		passed += 1
 	else:

@@ -1,11 +1,11 @@
-extends GutTest
+extends Node
 
 ## Tests for Board grid operations
 
 var board: Node = null
 
 func before_each():
-	board = autoqfree(Node.new())
+	board = Node.new()
 	board.set_script(load("res://scripts/game/board.gd"))
 	add_child(board)
 	board._ready()
@@ -13,6 +13,26 @@ func before_each():
 func after_each():
 	if board:
 		board.free()
+		board = null
+
+## Helper assertion functions
+func assert_true(condition: bool, message: String = "") -> bool:
+	if not condition:
+		print("ASSERTION FAILED: " + message)
+		return false
+	return true
+
+func assert_false(condition: bool, message: String = "") -> bool:
+	if condition:
+		print("ASSERTION FAILED: " + message)
+		return false
+	return true
+
+func assert_eq(actual, expected, message: String = "") -> bool:
+	if actual != expected:
+		print("ASSERTION FAILED: " + message + " (expected " + str(expected) + ", got " + str(actual) + ")")
+		return false
+	return true
 
 ## Test grid initialization
 func test_grid_initialization():

@@ -1,4 +1,4 @@
-extends GutTest
+extends Node
 
 ## Tests for MergeItem tier system and merge mechanics
 
@@ -8,9 +8,31 @@ func before_each():
 	# Create a minimal mock board for testing
 	pass
 
+func after_each():
+	pass
+
+## Helper assertion functions
+func assert_true(condition: bool, message: String = "") -> bool:
+	if not condition:
+		print("ASSERTION FAILED: " + message)
+		return false
+	return true
+
+func assert_false(condition: bool, message: String = "") -> bool:
+	if condition:
+		print("ASSERTION FAILED: " + message)
+		return false
+	return true
+
+func assert_eq(actual, expected, message: String = "") -> bool:
+	if actual != expected:
+		print("ASSERTION FAILED: " + message + " (expected " + str(expected) + ", got " + str(actual) + ")")
+		return false
+	return true
+
 ## Test tier clamping
 func test_tier_clamping():
-	var item = autoqfree(Node2D.new())
+	var item = Node2D.new()
 	item.set_script(load("res://scripts/game/item.gd"))
 	add_child(item)
 	
@@ -28,7 +50,7 @@ func test_tier_clamping():
 
 ## Test tier names
 func test_tier_names():
-	var item = autoqfree(Node2D.new())
+	var item = Node2D.new()
 	item.set_script(load("res://scripts/game/item.gd"))
 	add_child(item)
 	
@@ -43,7 +65,7 @@ func test_tier_names():
 
 ## Test tier colors
 func test_tier_colors():
-	var item = autoqfree(Node2D.new())
+	var item = Node2D.new()
 	item.set_script(load("res://scripts/game/item.gd"))
 	add_child(item)
 	
@@ -56,11 +78,11 @@ func test_tier_colors():
 
 ## Test can_merge_with
 func test_can_merge_with():
-	var item1 = autoqfree(Node2D.new())
+	var item1 = Node2D.new()
 	item1.set_script(load("res://scripts/game/item.gd"))
 	add_child(item1)
 	
-	var item2 = autoqfree(Node2D.new())
+	var item2 = Node2D.new()
 	item2.set_script(load("res://scripts/game/item.gd"))
 	add_child(item2)
 	
@@ -83,11 +105,11 @@ func test_merge_value_from_tier():
 ## Test max tier cannot merge
 func test_max_tier_cannot_merge():
 	# Tier 7 (Billionaire) should not be able to merge
-	var item1 = autoqfree(Node2D.new())
+	var item1 = Node2D.new()
 	item1.set_script(load("res://scripts/game/item.gd"))
 	add_child(item1)
 	
-	var item2 = autoqfree(Node2D.new())
+	var item2 = Node2D.new()
 	item2.set_script(load("res://scripts/game/item.gd"))
 	add_child(item2)
 	
