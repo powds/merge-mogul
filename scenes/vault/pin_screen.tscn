@@ -1,0 +1,212 @@
+[gd_scene load_steps=4 format=3 uid="uid://dvaultpin001"]
+
+[ext_resource type="Script" path="res://scenes/vault/pin_screen.gd" id="1_pin"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.12, 0.12, 0.12, 0.98)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.35, 0.35, 0.35, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0.2, 0.2, 0.2, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.45, 0.45, 0.45, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.3, 0.3, 0.3, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.65, 0.65, 0.65, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="PinScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_pin")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -280.0
+offset_right = 200.0
+offset_bottom = 280.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "Enter PIN"
+horizontal_alignment = 1
+
+[node name="PinDisplay" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "_ _ _ _"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NumpadGrid" type="GridContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+columns = 3
+
+[node name="Btn1" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "1"
+
+[node name="Btn2" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "2"
+
+[node name="Btn3" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "3"
+
+[node name="Btn4" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "4"
+
+[node name="Btn5" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "5"
+
+[node name="Btn6" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "6"
+
+[node name="Btn7" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "7"
+
+[node name="Btn8" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "8"
+
+[node name="Btn9" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "9"
+
+[node name="BtnClear" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "C"
+
+[node name="Btn0" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "0"
+
+[node name="BtnBack" type="Button" parent="Panel/VBoxContainer/NumpadGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "⌫"
+
+[node name="Spacer2" type="Control" parent="Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ErrorLabel" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+custom_colors/font_color = Color(0.9, 0.2, 0.2, 1)
+
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/Btn1" to="." method="_on_btn_pressed" binds= ["1"]]
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/Btn2" to="." method="_on_btn_pressed" binds= ["2"]]
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/Btn3" to="." method="_on_btn_pressed" binds= ["3"]]
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/Btn4" to="." method="_on_btn_pressed" binds= ["4"]]
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/Btn5" to="." method="_on_btn_pressed" binds= ["5"]]
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/Btn6" to="." method="_on_btn_pressed" binds= ["6"]]
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/Btn7" to="." method="_on_btn_pressed" binds= ["7"]]
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/Btn8" to="." method="_on_btn_pressed" binds= ["8"]]
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/Btn9" to="." method="_on_btn_pressed" binds= ["9"]]
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/Btn0" to="." method="_on_btn_pressed" binds= ["0"]]
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/BtnClear" to="." method="_on_clear_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/NumpadGrid/BtnBack" to="." method="_on_back_pressed"]

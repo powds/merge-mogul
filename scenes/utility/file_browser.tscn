@@ -1,0 +1,122 @@
+[gd_scene load_steps=4 format=3 uid="uid://dfilebrowser001"]
+
+[ext_resource type="Script" path="res://scenes/utility/file_browser.gd" id="1_fb_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.15, 0.15, 0.15, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.3, 0.3, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
+bg_color = Color(0.2, 0.2, 0.2, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.4, 0.4, 0.4, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="FileBrowser" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_fb_script")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PathLabel" type="Label" parent="Panel/VBoxContainer/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "/user/home"
+vertical_alignment = 1
+
+[node name="RefreshButton" type="Button" parent="Panel/VBoxContainer/Header"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "Refresh"
+
+[node name="HomeButton" type="Button" parent="Panel/VBoxContainer/Header"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "Home"
+
+[node name="UpButton" type="Button" parent="Panel/VBoxContainer/Header"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "Up"
+
+[node name="HSplitContainer" type="HSplitContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 150
+
+[node name="FolderTree" type="Tree" parent="Panel/VBoxContainer/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FileList" type="ItemList" parent="Panel/VBoxContainer/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="Footer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="OpenButton" type="Button" parent="Panel/VBoxContainer/Footer"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "Open"
+
+[node name="CancelButton" type="Button" parent="Panel/VBoxContainer/Footer"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "Cancel"
+
+[node name="Spacer" type="Control" parent="Panel/VBoxContainer/Footer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StatusLabel" type="Label" parent="Panel/VBoxContainer/Footer"]
+layout_mode = 2
+text = "Ready"
+horizontal_alignment = 2
+
+[connection signal="pressed" from="Panel/VBoxContainer/Header/RefreshButton" to="." method="_on_refresh_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Header/HomeButton" to="." method="_on_home_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Header/UpButton" to="." method="_on_up_pressed"]
+[connection signal="item_activated" from="Panel/VBoxContainer/HSplitContainer/FileList" to="." method="_on_file_item_activated"]
+[connection signal="pressed" from="Panel/VBoxContainer/Footer/OpenButton" to="." method="_on_open_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/Footer/CancelButton" to="." method="_on_cancel_pressed"]

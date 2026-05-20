@@ -1,0 +1,82 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://scenes/game/cell.tscn" type="PackedScene" id=1]
+
+[node name="Board" type="Node2D"]
+
+[node name="Grid" type="Node2D" parent="."]
+
+[node name="Cell00" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 0, 0 )
+
+[node name="Cell01" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 64, 0 )
+
+[node name="Cell02" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 128, 0 )
+
+[node name="Cell03" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 192, 0 )
+
+[node name="Cell04" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 256, 0 )
+
+[node name="Cell10" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 0, 64 )
+
+[node name="Cell11" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 64, 64 )
+
+[node name="Cell12" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 128, 64 )
+
+[node name="Cell13" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 192, 64 )
+
+[node name="Cell14" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 256, 64 )
+
+[node name="Cell20" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 0, 128 )
+
+[node name="Cell21" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 64, 128 )
+
+[node name="Cell22" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 128, 128 )
+
+[node name="Cell23" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 192, 128 )
+
+[node name="Cell24" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 256, 128 )
+
+[node name="Cell30" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 0, 192 )
+
+[node name="Cell31" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 64, 192 )
+
+[node name="Cell32" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 128, 192 )
+
+[node name="Cell33" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 192, 192 )
+
+[node name="Cell34" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 256, 192 )
+
+[node name="Cell40" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 0, 256 )
+
+[node name="Cell41" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 64, 256 )
+
+[node name="Cell42" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 128, 256 )
+
+[node name="Cell43" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 192, 256 )
+
+[node name="Cell44" instance=ExtResource( 1 ) parent="Grid" groups=["cell"]]
+position = Vector2( 256, 256 )

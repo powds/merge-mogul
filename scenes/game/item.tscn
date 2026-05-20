@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3 uid="uid://draggable_merge_item"]
+
+[ext_resource type="Script" path="res://scenes/game/item.gd" id="1_item_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
+atlas = ExtResource("res://assets/item_icons.png")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hitbox"]
+radius = 32.0
+
+[node name="Item" type="Node2D"]
+script = ExtResource("1_item_script")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = SubResource("AtlasTexture_icon")
+offset = Vector2(32, 32)
+
+[node name="Hitbox" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("CircleShape2D_hitbox")
+
+[connection signal="input_event" from="Hitbox" to="." method="_on_hitbox_input_event"]
+[connection signal="mouse_entered" from="Hitbox" to="." method="_on_hitbox_mouse_entered"]
+[connection signal="mouse_exited" from="Hitbox" to="." method="_on_hitbox_mouse_exited"]

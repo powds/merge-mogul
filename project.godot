@@ -1,0 +1,45 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes in []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="MyGame"
+config/description="A Godot 4.6.2 project with Android export"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.6", "Forward Plus")
+config/icon="res://icon.svg"
+
+[rendering]
+
+renderer/rendering_method="mobile"
+
+[android]
+
+package/unique_name="com.example.mygame"
+package/name="MyGame"
+package/version/code=1
+package/version/name="1.0.0"
+package/signed_debug_release=true
+package/signed_release_release=false
+keystore/debug="user://debug.keystore"
+keystore/release=""
+keystore/release_user=""
+keystore/release_password=""
+manifest/uses_gl_compatibility=false
+manifest/supports_gles3=true
+manifest/supports_gles2=false
+manifest/gpu_mode="auto"
+manifest/target_sdk_version=0
+manifest/min_sdk_version=21
+manifest/camera/permission="android.permission.CAMERA"
+manifest/microphone/permission="android.permission.RECORD_AUDIO"
+export_credentials/custom_keystore_path=""
+export_credentials/keystore_alias=""
+export_credentials/keystore_alias_password=""
