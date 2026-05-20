@@ -1,6 +1,6 @@
 extends Node
 ## 2048-style game board with grid logic, spawn, and merge detection
-## Manages the 4x4 game grid, tile spawning, and merge operations
+## Manages the 5x5 game grid, tile spawning, and merge operations
 
 # Signals
 signal tile_spawned(pos: Vector2i, value: int)
@@ -10,7 +10,8 @@ signal game_won()
 signal no_moves_available()
 
 # Grid configuration
-const GRID_SIZE: int = 4
+const GRID_SIZE: int = 5
+const CELL_SIZE: int = 64
 const WIN_VALUE: int = 2048
 
 # Grid state: 2D array where 0 = empty, value = tile value
@@ -227,3 +228,60 @@ func slide_up() -> Array:
 ## Check if a slide in any direction is possible
 func can_slide_any_direction() -> bool:
 	return slide_left().size() > 0 or slide_right().size() > 0 or slide_up().size() > 0 or slide_down().size() > 0
+
+# ==================== DRAG-DROP MERGE HANDLING ====================
+
+## Handle merge between two items of the same tier
+func merge(item1: MergeItem, item2: MergeItem) -> bool:
+	if item1.tier != item2.tier:
+		return false
+	
+	# Prevent merging max tier items
+	if item1.tier >= 7:
+		return false
+	
+	# Get positions
+	var pos1 = item1.grid_position
+	var pos2 = item2.grid_position
+	
+	# Update grid
+	var new_tier = item1.tier + 1
+	grid[pos1.y][pos1.x] = new_tier
+	grid[pos2.y][pos2.x] = 0
+	
+	# Emit merge signal
+	tile_merged.emit(pos1, new_tier, [pos1, pos2])
+	board_changed.emit()
+	
+	return true
+
+## Handle swap between two items of different tiers
+func swap(item1: MergeItem, item2: MergeItem) -> bool:
+	if item1.tier == item2.tier:
+		return false
+	
+	# Get positions
+	var pos1 = item1.grid_position
+	var pos2 = item2.grid_position
+	
+	# Swap in grid
+	var temp = grid[pos1.y][pos1.x]
+	grid[pos1.y][pos1.x] = grid[pos2.y][pos2.x]
+	grid[pos2.y][pos2.x] = temp
+	
+	board_changed.emit()
+	return true
+
+## Get grid position from world position
+func world_to_grid(world_pos: Vector2) -> Vector2i:
+	return Vector2i(
+		int(world_pos.x / CELL_SIZE),
+		int(world_pos.y / CELL_SIZE)
+	)
+
+## Get world position from grid position
+func grid_to_world(grid_pos: Vector2i) -> Vector2:
+	return Vector2(
+		grid_pos.x * CELL_SIZE + CELL_SIZE / 2,
+		grid_pos.y * CELL_SIZE + CELL_SIZE / 2
+	)

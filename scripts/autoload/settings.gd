@@ -59,7 +59,7 @@ func save_settings() -> void:
 		push_error("Failed to save settings: %s" % err)
 
 func _apply_display_settings() -> void:
-	DisplayServer.window_set_vsync_mode(VsyncMode.ENABLED if vsync else VsyncMode.DISABLED)
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
 	if fullscreen:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	else:
@@ -67,16 +67,20 @@ func _apply_display_settings() -> void:
 
 func set_master_volume(value: float) -> void:
 	master_volume = clamp(value, 0.0, 1.0)
+	save_settings()
 
 func set_music_volume(value: float) -> void:
 	music_volume = clamp(value, 0.0, 1.0)
+	save_settings()
 
 func set_sfx_volume(value: float) -> void:
 	sfx_volume = clamp(value, 0.0, 1.0)
+	save_settings()
 
 func toggle_fullscreen() -> void:
 	fullscreen = !fullscreen
 	_apply_display_settings()
+	save_settings()
 
 func toggle_vsync() -> void:
 	vsync = !vsync
@@ -94,3 +98,4 @@ func reset_to_defaults() -> void:
 	show_fps = false
 	show_touch_controls = true
 	_apply_display_settings()
+	save_settings()

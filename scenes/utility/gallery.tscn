@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://dgallery001"]
 
-[ext_resource type="Script" path="res://scenes/utility/gallery.gd" id="1_gallery_script"]
+[ext_resource type="Script" path="res://scripts/utility/gallery.gd" id="1_gallery_script"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_background"]
 bg_color = Color(0.1, 0.1, 0.1, 0.95)

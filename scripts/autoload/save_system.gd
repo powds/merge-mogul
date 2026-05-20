@@ -35,10 +35,13 @@ static func load_game() -> Dictionary:
 	return {}
 
 static func delete_save() -> bool:
-	if FileAccess.file_exists(SAVE_PATH):
-		DirAccess.remove_absolute(SAVE_PATH)
-		return true
-	return false
+	if not FileAccess.file_exists(SAVE_PATH):
+		return false
+	var err := DirAccess.remove_absolute(SAVE_PATH)
+	if err != OK:
+		push_error("Failed to delete save file: %s" % err)
+		return false
+	return true
 
 static func save_exists() -> bool:
 	return FileAccess.file_exists(SAVE_PATH)

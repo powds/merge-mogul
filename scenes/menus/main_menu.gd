@@ -15,6 +15,8 @@ func _ready():
 	quit_btn.pressed.connect(_on_quit_pressed)
 
 func _on_play_pressed():
+	if has_node("/root/GameState"):
+		GameState.set_state(GameState.PLAYING)
 	get_tree().change_scene_to_file("res://scenes/game/game.tscn")
 
 func _on_settings_pressed():

@@ -6,10 +6,10 @@ signal ad_opened(type: int)
 signal ad_closed(type: int)
 signal ad_rewarded(type: int, amount: int)
 
-const AdType := {
-	BANNER: 0,
-	INTERSTITIAL: 1,
-	REWARDED: 2,
+enum AdType {
+	BANNER = 0,
+	INTERSTITIAL = 1,
+	REWARDED = 2,
 }
 
 var _is_initialized := false
@@ -43,12 +43,26 @@ func is_loaded(type: int) -> bool:
 func set_banner_position(x: int, y: int) -> void:
 	print("AdManager: Setting banner position to ", x, ", ", y)
 
-func load_rewarded_ad() -> void:
+func load_interstitial() -> void:
+	print("AdManager: Loading interstitial ad")
+	await get_tree().create_timer(1.0).timeout
+	emit_signal("ad_loaded", AdType.INTERSTITIAL)
+
+func show_interstitial() -> bool:
+	if not _is_initialized:
+		return false
+	print("AdManager: Showing interstitial ad")
+	emit_signal("ad_opened", AdType.INTERSTITIAL)
+	await get_tree().create_timer(0.5).timeout
+	emit_signal("ad_closed", AdType.INTERSTITIAL)
+	return true
+
+func load_rewarded() -> void:
 	print("AdManager: Loading rewarded ad")
 	await get_tree().create_timer(1.0).timeout
 	emit_signal("ad_loaded", AdType.REWARDED)
 
-func show_rewarded_ad() -> bool:
+func show_rewarded() -> bool:
 	if not _is_initialized:
 		return false
 	print("AdManager: Showing rewarded ad")
@@ -57,3 +71,9 @@ func show_rewarded_ad() -> bool:
 	emit_signal("ad_rewarded", AdType.REWARDED, 1)
 	emit_signal("ad_closed", AdType.REWARDED)
 	return true
+
+func load_rewarded_ad() -> void:
+	load_rewarded()
+
+func show_rewarded_ad() -> bool:
+	return await show_rewarded()

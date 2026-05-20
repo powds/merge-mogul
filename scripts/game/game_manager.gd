@@ -92,14 +92,14 @@ func save_game() -> void:
 		"current_level": current_level,
 		"current_xp": current_xp
 	}
-	if FileAccess.file_exists("user://save_game.dat"):
-		var file = FileAccess.open("user://save_game.dat", FileAccess.WRITE)
+	var file = FileAccess.open("user://save_game.dat", FileAccess.WRITE)
+	if file:
 		file.store_var(data)
 		file.close()
 
 func load_game() -> void:
-	if FileAccess.file_exists("user://save_game.dat"):
-		var file = FileAccess.open("user://save_game.dat", FileAccess.READ)
+	var file = FileAccess.open("user://save_game.dat", FileAccess.READ)
+	if file:
 		var data = file.get_var()
 		file.close()
 		if data:
