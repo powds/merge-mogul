@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://draggable_merge_item"]
 
-[ext_resource type="Script" path="res://scenes/game/item.gd" id="1_item_script"]
+[ext_resource type="Script" path="res://scripts/game/item.gd" id="1_item_script"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
 atlas = ExtResource("res://assets/item_icons.png")

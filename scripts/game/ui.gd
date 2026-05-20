@@ -55,8 +55,14 @@ func _on_pause_pressed() -> void:
 	get_tree().paused = true
 
 func _on_watch_ad_pressed() -> void:
+	AdManager.ad_rewarded.connect(_on_ad_rewarded)
+	AdManager.load_rewarded()
 	AdManager.show_rewarded()
-	GameManager.add_coins(50)
+
+func _on_ad_rewarded(type: int, amount: int) -> void:
+	if type == AdManager.AdType.REWARDED:
+		GameManager.add_coins(amount)
+	AdManager.ad_rewarded.disconnect(_on_ad_rewarded)
 
 func _on_settings_pressed() -> void:
 	settings_requested.emit()

@@ -68,7 +68,7 @@ func show_rewarded() -> bool:
 	print("AdManager: Showing rewarded ad")
 	emit_signal("ad_opened", AdType.REWARDED)
 	await get_tree().create_timer(0.5).timeout
-	emit_signal("ad_rewarded", AdType.REWARDED, 1)
+	emit_signal("ad_rewarded", AdType.REWARDED, 50)
 	emit_signal("ad_closed", AdType.REWARDED)
 	return true
 

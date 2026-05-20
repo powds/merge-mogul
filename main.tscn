@@ -1,7 +1,6 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://main001"]
 
-[node name="Main" type="Control"]
-layout = Extent2D(1152, 648)
-script = ExtResource("res://main.gd")
+[ext_resource type="Script" path="res://main.gd" id="1"]
 
-[node name="GameRoot" type="Node2D" parent="."]
+[node name="Main" type="Control" id="1"]
+script = ExtResource("1")

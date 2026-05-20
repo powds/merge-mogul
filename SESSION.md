@@ -1,61 +1,74 @@
 # Merge Mogul - Build Session
 
+## Session Date: May 20, 2025
+
+## Repository
+https://github.com/powds/merge-mogul
+
 ## Build Progress
 
-**Date:** 2025-05-20
-**Status:** Phase 1 complete - Core game + utility scenes
+### Phase 1: Core Game - COMPLETE
 
-### Completed This Session
-- Core merge game mechanics (board, items, cells)
-- Game UI system with score/progress display
-- Main menu scene
-- Vault storage system (manager + UI)
-- App launcher / gallery utility scene
-- Autoload systems: settings, save_system, audio, ad_manager, vault_manager, game_state
-- Export presets configured for Mac
+**What Works:**
+- Godot 4.6.2 project structure
+- 5x5 merge game board (board.gd, scripts/game/)
+- Drag-drop merge items with 8 tiers (item.gd)
+- Game HUD with coins, level, XP, moves (ui.gd, ui.tscn)
+- Main menu with scene transitions (main_menu.gd, main_menu.tscn)
+- Autoloads: SaveSystem, Settings, GameState, GameManager, Audio, AdManager, VaultManager
+- Game state machine (game_state.gd)
+- Coin/XP reward system (game_manager.gd)
+- Rewarded ad integration (ad_manager.gd → GameManager)
+- Cell visual backgrounds (cell.gd, cell.tscn)
+- Vault system with PIN auth (vault_manager.gd)
+- File browser utility (file_browser.gd)
+- Gallery utility (gallery.gd)
+- App launcher utility (app_launcher.gd)
+- Vault storage encryption (vault_storage.gd)
+- Android export configured (com.mergemogul.game, SDK 21-34)
+- Placeholder item sprites (item_tier_0.png through item_tier_7.png)
+- Board background (board_bg.png)
 
-### Project Overview
-- Godot-based merge/idle game
-- Core game loop and progression implemented
-- Save/load system with vault persistence
+**What's Fixed:**
+- GameState enum constants (STATE_MENU, STATE_PLAYING, etc.)
+- main_menu.gd Play button using correct GameState.STATE_PLAYING
+- main.tscn using proper Godot 4 format with ExtResource
+- VsyncMode → DisplayServer.VSYNC_ENABLED/DISABLED
+- NotificationWMWindowFocusIn → Node.NOTIFICATION_WM_WINDOW_FOCUS_IN
+- AdType dictionary const → enum
+- show_rewarded() properly awaited
+- GameManager without typed variable causing mismatch
 
-### Files Created/Modified
-**Scenes:**
-- `scenes/game/board.tscn` - Game board grid
-- `scenes/game/cell.tscn` - Individual merge cells
-- `scenes/game/game.tscn` - Main game scene
-- `scenes/game/ui.tscn` - In-game UI
-- `scenes/utility/gallery.tscn` - Gallery utility scene
-- `scenes/menus/main_menu.gd` - Main menu
-- `scenes/utility/app_launcher.gd` - App launcher utility
-- `scenes/vault/vault_manager.gd` - Vault UI controller
+**What's Missing / TODO:**
+- Sound effects (.ogg files in assets/audio/sfx/)
+- Icon.svg / icon.png for the app
+- Android export templates properly linked (templates/ folder → root)
+- Java JDK path configured in editor settings
+- Actual APK build (in progress)
 
-**Scripts:**
-- `scripts/game/board.gd` - Board logic
-- `scripts/game/item.gd` - Item/merge logic
-- `scripts/game/game.gd` - Game controller
-- `scripts/game/game_manager.gd` - Game state management
-- `scripts/game/ui.gd` - Game UI controller
-- `scripts/autoload/settings.gd` - Settings manager
-- `scripts/autoload/save_system.gd` - Save/load system
-- `scripts/autoload/audio.gd` - Audio manager
-- `scripts/autoload/ad_manager.gd` - Ad provider interface
-- `scripts/autoload/vault_manager.gd` - Vault backend
-- `scripts/autoload/game_state.gd` - Global game state
-- `scripts/utility/` - Utility scripts
-- `scripts/vault/` - Vault-related scripts
+### Build Status
+- Export templates: INSTALLED (copied to correct location)
+- Java JDK: FOUND at /Applications/Android Studio.app/Contents/jbr/Contents/Home
+- APK build: IN PROGRESS
 
-**Config:**
-- `project.godot` - Updated project config
-- `export_presets.cfg` - Mac export config
-- `main.gd` - Entry point
+## Files Created/Modified This Session
+- main.gd, main.tscn - Main entry point
+- scenes/game/game.tscn, game.gd - Main game scene
+- scenes/game/board.tscn, scripts/game/board.gd - 5x5 grid
+- scenes/game/item.tscn, scripts/game/item.gd - Merge items
+- scenes/game/cell.tscn, scripts/game/cell.gd - Cell visuals
+- scenes/game/ui.tscn, scripts/game/ui.gd - HUD
+- scenes/menus/main_menu.tscn, main_menu.gd - Menu
+- scripts/autoload/game_manager.gd - Game state manager
+- scripts/autoload/game_state.gd - State machine
+- scripts/autoload/ad_manager.gd - AdMob stubs
+- scripts/autoload/vault_manager.gd - Vault PIN
+- scripts/utility/file_browser.gd, gallery.gd, app_launcher.gd
+- scripts/vault/vault_storage.gd - Encryption
+- assets/images/item_tier_*.png - Item sprites
+- assets/images/board_bg.png - Board background
+- export/presets.cfg - Export configuration
+- BUILD_STATUS.md - Build status report
 
-### Repository
-- GitHub: https://github.com/powds/merge-mogul
-
-### Next Steps
-- Implement merge combination logic
-- Add item spawning mechanics
-- Build progression/reward system
-- Integrate ads
-- Polish UI/animations
+## Git Commits
+- "Session progress: Phase 1 core game + utility scenes"

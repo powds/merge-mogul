@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Merge Mogul"
+config/name="MergeMogul"
 config/description="Android Game + Utility Hybrid - Merge game with file manager, gallery, app launcher, and hidden vault."
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 SaveSystem="*res://scripts/autoload/save_system.gd"
 Settings="*res://scripts/autoload/settings.gd"
 GameState="*res://scripts/autoload/game_state.gd"
+GameManager="*res://scripts/autoload/game_manager.gd"
 Audio="*res://scripts/autoload/audio.gd"
 AdManager="*res://scripts/autoload/ad_manager.gd"
 VaultManager="*res://scripts/autoload/vault_manager.gd"
@@ -31,8 +32,8 @@ renderer/rendering_method="mobile"
 
 [android]
 
-package/unique_name="com.mergemogul.game"
-package/name="Merge Mogul"
+package/unique_name="com.game.mergemogul"
+package/name="MergeMogul"
 package/version/code=1
 package/version/name="1.0.0"
 package/signed_debug_release=true
@@ -52,3 +53,7 @@ manifest/microphone/permission="android.permission.RECORD_AUDIO"
 export_credentials/custom_keystore_path=""
 export_credentials/keystore_alias=""
 export_credentials/keystore_alias_password=""
+
+[editor]
+
+export/android/java_sdk_path="/Applications/Android Studio.app/Contents/jbr/Contents/Home"

@@ -3,7 +3,7 @@ extends Node2D
 ## Manages game flow, drag-drop interactions, and coordinates all subsystems
 
 # References to child nodes
-@onready var board: Node2D = $Board
+@onready var board: Node = $Board
 @onready var ui: CanvasLayer = $UI
 
 # Game state
@@ -18,6 +18,16 @@ var items: Array[Node] = []
 const GRID_DIMENSION: int = 4
 const CELL_SIZE: int = 64
 const GRID_OFFSET: Vector2 = Vector2(0, 0)
+
+# Merge rewards config
+const MERGE_COIN_REWARDS: Dictionary = {
+	2: 1,    # 2+2=4
+	3: 3,    # 4+4=8
+	4: 10,   # 8+8=16
+	5: 25,   # 16+16=32
+	6: 50,   # 32+32=64
+	7: 100,  # 64+64=128
+}
 
 func _ready() -> void:
 	_setup_board()
@@ -48,6 +58,8 @@ func _connect_signals() -> void:
 		ui.menu_pressed.connect(_on_menu)
 	if ui.has_signal("pause_pressed"):
 		ui.pause_pressed.connect(_on_pause)
+	if ui.has_signal("watch_ad_requested"):
+		ui.watch_ad_requested.connect(_on_watch_ad)
 
 func _load_or_start_game() -> void:
 	if GameManager.current_state != GameManager.GameState.IDLE:
@@ -63,8 +75,11 @@ func _start_new_game() -> void:
 	if board.has_method("setup_new_game"):
 		board.setup_new_game()
 	else:
-		_spawn_initial_items(4)
+		# Spawn 3-5 initial items
+		var initial_count = randi() % 3 + 3  # 3 to 5
+		_spawn_initial_items(initial_count)
 	
+	GameManager.start_game()
 	_update_ui()
 
 func _spawn_initial_items(count: int) -> void:
@@ -77,14 +92,12 @@ func _spawn_item_at(grid_pos: Vector2i) -> void:
 	var world_pos = _grid_to_world(grid_pos)
 	var item = item_scene.instantiate()
 	item.position = world_pos
-	item.grid_position = grid_pos
 	item.snap_to_grid = true
 	item.grid_size = Vector2(CELL_SIZE, CELL_SIZE)
 	
-	if "dragged" in item:
-		item.dragged.connect(_on_item_dragged)
-	if "dropped" in item:
-		item.dropped.connect(_on_item_dropped)
+	# Connect to item signals (dragged and dropped from MergeItem)
+	item.dragged.connect(_on_item_dragged)
+	item.dropped.connect(_on_item_dropped)
 	
 	add_child(item)
 	items.append(item)
@@ -125,18 +138,34 @@ func _on_item_dragged(item: Node) -> void:
 
 func _on_item_dropped(item: Node, target: Node) -> void:
 	item.z_index = 0
+	# Note: MergeItem internally calls board.merge() or board.swap() in _end_drag()
+	# This callback is for additional game-level handling if needed
 	
-	# Handle merge or swap via board
-	if board.has_method("merge") and target != null:
-		board.merge(item, target)
-	elif board.has_method("swap") and target != null:
-		board.swap(item, target)
+	# Update move count after merge/swap
+	move_count += 1
+	_update_ui()
+	_check_game_over()
 
 func _on_tile_spawned(pos: Vector2i, value: int) -> void:
 	_spawn_item_at(pos)
+	_check_game_over()
 
 func _on_tile_merged(pos: Vector2i, value: int, merged_from: Array) -> void:
-	pass
+	# Award coins based on merged tier
+	var tier = _value_to_tier(value)
+	if MERGE_COIN_REWARDS.has(tier):
+		var reward = MERGE_COIN_REWARDS[tier]
+		GameManager.add_coins(reward)
+	_update_ui()
+
+func _value_to_tier(value: int) -> int:
+	# Convert 2048-style value to tier (2=1, 4=2, 8=3, 16=4, etc.)
+	var tier = 0
+	var v = value
+	while v > 1:
+		v /= 2
+		tier += 1
+	return tier
 
 func _on_board_changed() -> void:
 	_update_ui()
@@ -148,10 +177,23 @@ func _on_game_won() -> void:
 	GameManager.victory()
 
 func _on_no_moves() -> void:
+	_handle_game_over()
+
+func _check_game_over() -> void:
+	if not board.has_method("is_full"):
+		return
+	if board.is_full() and not board.has_possible_merges():
+		_handle_game_over()
+
+func _handle_game_over() -> void:
 	is_game_active = false
 	if ui.has_method("show_game_over"):
-		ui.show_game_over()
+		ui.show_game_over(board.score if board.has_method("score") else 0)
 	GameManager.game_over()
+
+func _on_watch_ad() -> void:
+	# Award +50 coins via AdManager
+	GameManager.add_coins(50)
 
 func _on_restart() -> void:
 	_clear_items()
@@ -180,6 +222,9 @@ func _update_ui() -> void:
 	
 	if ui.has_method("update_level"):
 		ui.update_level(GameManager.current_level)
+	
+	if ui.has_method("update_coins"):
+		ui.update_coins(GameManager.coins)
 
 func restore_game_state() -> void:
 	pass
