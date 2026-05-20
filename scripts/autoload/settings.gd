@@ -65,16 +65,28 @@ func _apply_display_settings() -> void:
 	else:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 
+func _apply_audio_settings() -> void:
+	if Audio:
+		Audio.apply_volume_from_settings()
+
 func set_master_volume(value: float) -> void:
 	master_volume = clamp(value, 0.0, 1.0)
+	_apply_audio_settings()
 	save_settings()
 
 func set_music_volume(value: float) -> void:
 	music_volume = clamp(value, 0.0, 1.0)
+	_apply_audio_settings()
 	save_settings()
 
 func set_sfx_volume(value: float) -> void:
 	sfx_volume = clamp(value, 0.0, 1.0)
+	_apply_audio_settings()
+	save_settings()
+
+func set_fullscreen(value: bool) -> void:
+	fullscreen = value
+	_apply_display_settings()
 	save_settings()
 
 func toggle_fullscreen() -> void:

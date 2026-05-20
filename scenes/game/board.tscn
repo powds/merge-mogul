@@ -53,3 +53,30 @@ position = Vector2( 128, 192 )
 
 [node name="Cell33" instance=ExtResource( 1 ) parent="Grid"]
 position = Vector2( 192, 192 )
+
+[node name="Cell04" instance=ExtResource( 1 ) parent="Grid"]
+position = Vector2( 256, 0 )
+
+[node name="Cell14" instance=ExtResource( 1 ) parent="Grid"]
+position = Vector2( 256, 64 )
+
+[node name="Cell24" instance=ExtResource( 1 ) parent="Grid"]
+position = Vector2( 256, 128 )
+
+[node name="Cell34" instance=ExtResource( 1 ) parent="Grid"]
+position = Vector2( 256, 192 )
+
+[node name="Cell40" instance=ExtResource( 1 ) parent="Grid"]
+position = Vector2( 0, 256 )
+
+[node name="Cell41" instance=ExtResource( 1 ) parent="Grid"]
+position = Vector2( 64, 256 )
+
+[node name="Cell42" instance=ExtResource( 1 ) parent="Grid"]
+position = Vector2( 128, 256 )
+
+[node name="Cell43" instance=ExtResource( 1 ) parent="Grid"]
+position = Vector2( 192, 256 )
+
+[node name="Cell44" instance=ExtResource( 1 ) parent="Grid"]
+position = Vector2( 256, 256 )

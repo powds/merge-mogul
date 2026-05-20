@@ -24,7 +24,7 @@ https://github.com/powds/merge-mogul
 - File browser utility (file_browser.gd)
 - Gallery utility (gallery.gd)
 - App launcher utility (app_launcher.gd)
-- Vault storage encryption (vault_storage.gd)
+- Vault storage encryption (vault_storage.gd) - ENHANCED
 - Android export configured (com.mergemogul.game, SDK 21-34)
 - Placeholder item sprites (item_tier_0.png through item_tier_7.png)
 - Board background (board_bg.png)
@@ -38,18 +38,17 @@ https://github.com/powds/merge-mogul
 - AdType dictionary const → enum
 - show_rewarded() properly awaited
 - GameManager without typed variable causing mismatch
+- vault_storage.gd: Added AES-256-GCM encryption, PBKDF2 key derivation (100k iterations), HMAC-SHA256, proper UUID v4 generation, secure delete with garbage overwrite
 
 **What's Missing / TODO:**
 - Sound effects (.ogg files in assets/audio/sfx/)
 - Icon.svg / icon.png for the app
-- Android export templates properly linked (templates/ folder → root)
-- Java JDK path configured in editor settings
-- Actual APK build (in progress)
+- APK build (in progress - no APK generated yet)
 
 ### Build Status
 - Export templates: INSTALLED (copied to correct location)
 - Java JDK: FOUND at /Applications/Android Studio.app/Contents/jbr/Contents/Home
-- APK build: IN PROGRESS
+- APK build: NOT YET BUILT (pending first successful export)
 
 ## Files Created/Modified This Session
 - main.gd, main.tscn - Main entry point
@@ -64,11 +63,12 @@ https://github.com/powds/merge-mogul
 - scripts/autoload/ad_manager.gd - AdMob stubs
 - scripts/autoload/vault_manager.gd - Vault PIN
 - scripts/utility/file_browser.gd, gallery.gd, app_launcher.gd
-- scripts/vault/vault_storage.gd - Encryption
+- scripts/vault/vault_storage.gd - ENHANCED encryption (AES-256-GCM, PBKDF2, HMAC-SHA256)
 - assets/images/item_tier_*.png - Item sprites
 - assets/images/board_bg.png - Board background
 - export/presets.cfg - Export configuration
 - BUILD_STATUS.md - Build status report
 
 ## Git Commits
+- "Phase 1 complete: Core merge game, utility tabs, vault system, Android export configured"
 - "Session progress: Phase 1 core game + utility scenes"

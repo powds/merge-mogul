@@ -20,6 +20,14 @@ func _ready() -> void:
 	combo_timer.one_shot = true
 	combo_timer.timeout.connect(_on_combo_timer_timeout)
 	add_child(combo_timer)
+	
+	# Connect to GameManager signals for live updates
+	GameManager.coins_changed.connect(_on_coins_changed)
+	GameManager.xp_changed.connect(_on_xp_changed)
+	GameManager.level_up.connect(_on_level_up)
+	
+	# Connect to AdManager signals
+	AdManager.ad_loaded.connect(_on_ad_loaded)
 
 func update_coins(amount: int) -> void:
 	coin_value.text = str(amount)
@@ -43,6 +51,15 @@ func show_combo(multiplier: int) -> void:
 func _on_combo_timer_timeout() -> void:
 	combo_popup.visible = false
 
+func _on_coins_changed(amount: int) -> void:
+	update_coins(amount)
+
+func _on_xp_changed(current: int, max_xp: int) -> void:
+	update_xp(current, max_xp)
+
+func _on_level_up(new_level: int) -> void:
+	update_level(new_level)
+
 func show_game_over(score: int) -> void:
 	final_score_label.text = "Final Score: %s" % score
 	game_over_overlay.visible = true
@@ -57,7 +74,10 @@ func _on_pause_pressed() -> void:
 func _on_watch_ad_pressed() -> void:
 	AdManager.ad_rewarded.connect(_on_ad_rewarded)
 	AdManager.load_rewarded()
-	AdManager.show_rewarded()
+
+func _on_ad_loaded(type: int) -> void:
+	if type == AdManager.AdType.REWARDED:
+		AdManager.show_rewarded()
 
 func _on_ad_rewarded(type: int, amount: int) -> void:
 	if type == AdManager.AdType.REWARDED:

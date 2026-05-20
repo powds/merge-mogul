@@ -78,6 +78,7 @@ func spend_coins(amount: int) -> bool:
 # XP helpers
 func add_xp(amount: int) -> void:
 	current_xp += amount
+	_check_level_up()
 
 # Persistence using SaveSystem
 func _load_game() -> void:
@@ -87,6 +88,7 @@ func _load_game() -> void:
 	coins = data.get("coins", 0)
 	level = data.get("level", 1)
 	current_xp = data.get("current_xp", 0)
+	_check_level_up()
 
 func save_game() -> void:
 	var data := {

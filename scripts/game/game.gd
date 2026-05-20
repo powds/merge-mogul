@@ -15,7 +15,7 @@ var item_scene: PackedScene = preload("res://scenes/game/item.tscn")
 var items: Array[Node] = []
 
 # Board config
-const GRID_DIMENSION: int = 4
+const GRID_DIMENSION: int = 5
 const CELL_SIZE: int = 64
 const GRID_OFFSET: Vector2 = Vector2(0, 0)
 

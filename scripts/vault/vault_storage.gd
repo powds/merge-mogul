@@ -44,11 +44,66 @@ class VaultEntry:
 		}
 
 
+static func _get_crypto() -> Crypto:
+	return Crypto.new()
+
 static func _generate_uuid() -> String:
+	# Generate proper UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+	var bytes := _get_crypto().generate_random_bytes(16)
 	var uuid := ""
 	for i in range(16):
-		uuid += str(randi() % 256).pad_zeros(3)
+		if i == 4 or i == 6 or i == 8 or i == 10:
+			uuid += "-"
+		var byte := bytes[i]
+		if i == 6:
+			# Version 4
+			uuid += "%x" % (byte & 0x0f | 0x40)
+		elif i == 8:
+			# Variant 10xx
+			uuid += "%x" % (byte & 0x3f | 0x80)
+		else:
+			uuid += "%02x" % byte
 	return uuid
+
+
+static func _hmac_sha256(key: PackedByteArray, data: PackedByteArray) -> PackedByteArray:
+	# RFC 2104 HMAC-SHA256 implementation
+	var block_size := 64
+	var hash_size := 32
+	
+	# Pad or hash key to block_size
+	var k := key
+	if k.size() > block_size:
+		k = _sha256(k)
+	if k.size() < block_size:
+		k.resize(block_size)
+	
+	# Inner padding
+	var ipad := PackedByteArray()
+	ipad.resize(block_size)
+	for i in range(block_size):
+		ipad[i] = k[i] ^ 0x36
+	
+	# Outer padding
+	var opad := PackedByteArray()
+	opad.resize(block_size)
+	for i in range(block_size):
+		opad[i] = k[i] ^ 0x5c
+	
+	var inner_data := PackedByteArray()
+	inner_data.append_array(ipad)
+	inner_data.append_array(data)
+	var inner_hash := _sha256(inner_data)
+	
+	var outer_data := PackedByteArray()
+	outer_data.append_array(opad)
+	outer_data.append_array(inner_hash)
+	return _sha256(outer_data)
+
+
+static func _sha256(data: PackedByteArray) -> PackedByteArray:
+	var hash := var_to_bytes(data.sha256())
+	return hash
 
 
 static func _get_dir() -> DirAccess:
@@ -80,7 +135,10 @@ func initialize_vault(passphrase: String = "") -> bool:
 
 func _derive_key(passphrase: String) -> PackedByteArray:
 	var salt := _get_or_create_salt()
-	return _crypto.generate_random_bytes(KEY_SIZE)
+	var crypto := _get_crypto()
+	# Use PBKDF2 with SHA256 for key derivation
+	var key := crypto.pbkdf2(passphrase, salt, 100000, KEY_SIZE)
+	return key
 
 
 func _get_or_create_salt() -> PackedByteArray:
