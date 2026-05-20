@@ -47,7 +47,7 @@ const TIER_SHAPES: Array[int] = [
 		tier = clampi(value, 0, 7)
 		queue_redraw()
 
-@export var board_path: NodePath = @"../Board"
+@export var board_path: NodePath = "^../Board"
 
 # State
 var is_dragging: bool = false
@@ -249,3 +249,18 @@ func _snap_to_grid_position() -> void:
 			global_position = board.grid_to_world(grid_pos)
 		else:
 			global_position = Vector2(grid_pos.x * grid_size.x + grid_size.x / 2, grid_pos.y * grid_size.y + grid_size.y / 2)
+
+func pulse_scale() -> void:
+	"""Trigger a scale pulse animation"""
+	var tween = create_tween()
+	tween.tween_property(self, "scale", Vector2(1.3, 1.3), 0.1)
+	tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.15)
+
+var _flash_tween: Tween = null
+func flash_white() -> void:
+	"""Flash white briefly on merge"""
+	_flash_tween = create_tween()
+	# Flash effect handled via modulate
+	var original_modulate = Color.WHITE
+	modulate = Color.WHITE
+	_flash_tween.tween_property(self, "modulate", original_modulate, 0.2)

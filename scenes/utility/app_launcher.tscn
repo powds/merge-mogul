@@ -1,0 +1,286 @@
+[gd_scene load_steps=4 format=3 uid="uid://dapplauncher001"]
+
+[ext_resource type="Script" path="res://scenes/utility/app_launcher.gd" id="1_launcher_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.12, 0.12, 0.12, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.28, 0.28, 0.28, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_item_hover"]
+bg_color = Color(0.25, 0.25, 0.25, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.5, 0.5, 0.5, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="AppLauncher" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_launcher_script")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="Panel/VBoxContainer/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "App Launcher"
+horizontal_alignment = 0
+vertical_alignment = 1
+
+[node name="SearchLineEdit" type="LineEdit" parent="Panel/VBoxContainer/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Search apps..."
+
+[node name="CategoryOptionButton" type="OptionButton" parent="Panel/VBoxContainer/Header"]
+layout_mode = 2
+text = "All"
+item_count = 3
+popup/item_0/text = "All"
+popup/item_1/text = "Games"
+popup/item_2/text = "Utilities"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="AppsGrid" type="GridContainer" parent="Panel/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 4
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16
+
+[node name="AppItem_1" type="PanelContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_item_hover")
+
+[node name="VBox" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_1"]
+layout_mode = 2
+alignment = 1
+
+[node name="AppIcon" type="TextureRect" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_1/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AppName" type="Label" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_1/VBox"]
+layout_mode = 2
+text = "App 1"
+horizontal_alignment = 1
+
+[node name="AppItem_2" type="PanelContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_item_hover")
+
+[node name="VBox" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_2"]
+layout_mode = 2
+alignment = 1
+
+[node name="AppIcon" type="TextureRect" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_2/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AppName" type="Label" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_2/VBox"]
+layout_mode = 2
+text = "App 2"
+horizontal_alignment = 1
+
+[node name="AppItem_3" type="PanelContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_item_hover")
+
+[node name="VBox" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_3"]
+layout_mode = 2
+alignment = 1
+
+[node name="AppIcon" type="TextureRect" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_3/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AppName" type="Label" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_3/VBox"]
+layout_mode = 2
+text = "App 3"
+horizontal_alignment = 1
+
+[node name="AppItem_4" type="PanelContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_item_hover")
+
+[node name="VBox" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_4"]
+layout_mode = 2
+alignment = 1
+
+[node name="AppIcon" type="TextureRect" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_4/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AppName" type="Label" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_4/VBox"]
+layout_mode = 2
+text = "App 4"
+horizontal_alignment = 1
+
+[node name="AppItem_5" type="PanelContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_item_hover")
+
+[node name="VBox" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_5"]
+layout_mode = 2
+alignment = 1
+
+[node name="AppIcon" type="TextureRect" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_5/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AppName" type="Label" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_5/VBox"]
+layout_mode = 2
+text = "App 5"
+horizontal_alignment = 1
+
+[node name="AppItem_6" type="PanelContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_item_hover")
+
+[node name="VBox" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_6"]
+layout_mode = 2
+alignment = 1
+
+[node name="AppIcon" type="TextureRect" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_6/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AppName" type="Label" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_6/VBox"]
+layout_mode = 2
+text = "App 6"
+horizontal_alignment = 1
+
+[node name="AppItem_7" type="PanelContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_item_hover")
+
+[node name="VBox" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_7"]
+layout_mode = 2
+alignment = 1
+
+[node name="AppIcon" type="TextureRect" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_7/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AppName" type="Label" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_7/VBox"]
+layout_mode = 2
+text = "App 7"
+horizontal_alignment = 1
+
+[node name="AppItem_8" type="PanelContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_item_hover")
+
+[node name="VBox" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_8"]
+layout_mode = 2
+alignment = 1
+
+[node name="AppIcon" type="TextureRect" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_8/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AppName" type="Label" parent="Panel/VBoxContainer/ScrollContainer/AppsGrid/AppItem_8/VBox"]
+layout_mode = 2
+text = "App 8"
+horizontal_alignment = 1
+
+[node name="Footer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LaunchButton" type="Button" parent="Panel/VBoxContainer/Footer"]
+layout_mode = 2
+text = "Launch"
+
+[node name="Spacer" type="Control" parent="Panel/VBoxContainer/Footer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CountLabel" type="Label" parent="Panel/VBoxContainer/Footer"]
+layout_mode = 2
+text = "0 apps"
+horizontal_alignment = 2
+
+[connection signal="text_changed" from="Panel/VBoxContainer/Header/SearchLineEdit" to="." method="_on_search_text_changed"]
+[connection signal="item_selected" from="Panel/VBoxContainer/Header/CategoryOptionButton" to="." method="_on_category_selected"]
+[connection signal="pressed" from="Panel/VBoxContainer/Footer/LaunchButton" to="." method="_on_launch_pressed"]

@@ -1,0 +1,211 @@
+[gd_scene load_steps=10 format=3 uid="uid://dadtest001"]
+
+[ext_resource type="Script" path="res://scenes/ads/ad_test.gd" id="1_adtest"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_banner"]
+bg_color = Color(0.2, 0.2, 0.2, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.5, 0.5, 0.5, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.15, 0.15, 0.15, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.3, 0.3, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0.25, 0.25, 0.25, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.4, 0.4, 0.4, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.35, 0.35, 0.35, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.6, 0.6, 0.6, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_pressed"]
+bg_color = Color(0.15, 0.15, 0.15, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.3, 0.3, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_disabled"]
+bg_color = Color(0.15, 0.15, 0.15, 0.6)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.25, 0.25, 0.5)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_status"]
+bg_color = Color(0.1, 0.1, 0.1, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.3, 0.3, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="AdTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_adtest")
+
+[node name="BannerPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = -60.0
+offset_bottom = 0.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_banner")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="BannerPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BannerLabel" type="Label" parent="BannerPanel/VBoxContainer"]
+layout_mode = 2
+text = "[ BANNER AD - TOP ]"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BannerToggle" type="CheckButton" parent="BannerPanel/VBoxContainer"]
+layout_mode = 2
+text = "Show Banner"
+
+[node name="CenterPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -200.0
+offset_right = 200.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="CenterPanel/VBoxContainer"]
+layout_mode = 2
+text = "AdMob Test"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="CenterPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="InterstitialPanel" type="VBoxContainer" parent="CenterPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="InterstitialButton" type="Button" parent="CenterPanel/VBoxContainer/InterstitialPanel"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_btn_disabled")
+text = "Show Interstitial (Game Over)"
+
+[node name="RewardedPanel" type="VBoxContainer" parent="CenterPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="RewardedButton" type="Button" parent="CenterPanel/VBoxContainer/RewardedPanel"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_btn_disabled")
+text = "Watch Rewarded Ad (+50 Coins)"
+
+[node name="HSeparator2" type="HSeparator" parent="CenterPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CenterPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StatusPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -60.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_status")
+
+[node name="StatusLabel" type="Label" parent="StatusPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Status: Ready"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="pressed" from="CenterPanel/VBoxContainer/InterstitialPanel/InterstitialButton" to="." method="_on_interstitial_pressed"]
+[connection signal="pressed" from="CenterPanel/VBoxContainer/RewardedPanel/RewardedButton" to="." method="_on_rewarded_pressed"]

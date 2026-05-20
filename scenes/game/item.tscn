@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/game/item.gd" id="1_item_script"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("res://assets/item_icons.png")
+atlas = ExtResource("res://res/assets/item_icons.png")
 region = Rect2(0, 0, 64, 64)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hitbox"]

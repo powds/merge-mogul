@@ -2,5 +2,109 @@
 
 [ext_resource type="Script" path="res://main.gd" id="1"]
 
-[node name="Main" type="Control" id="1"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_normal"]
+bg_color = Color(0.15, 0.15, 0.15, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.3, 0.3, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_hover"]
+bg_color = Color(0.22, 0.22, 0.22, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.45, 0.45, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_pressed"]
+bg_color = Color(0.25, 0.25, 0.25, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 1
+border_color = Color(0.5, 0.5, 0.5, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_content_bg"]
+bg_color = Color(0.08, 0.08, 0.08, 1)
+
+[node name="Main" type="Control"]
 script = ExtResource("1")
+
+[node name="ContentContainer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -60.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TabBar" type="PanelContainer" parent="."]
+layout_mode = 2
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -60.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_content_bg")
+
+[node name="TabButtons" type="HBoxContainer" parent="TabBar"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="GameBtn" type="Button" parent="TabBar/TabButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_tab_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_pressed")
+text = "Game"
+
+[node name="FilesBtn" type="Button" parent="TabBar/TabButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_tab_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_pressed")
+text = "Files"
+
+[node name="GalleryBtn" type="Button" parent="TabBar/TabButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_tab_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_pressed")
+text = "Gallery"
+
+[node name="AppsBtn" type="Button" parent="TabBar/TabButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_tab_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_pressed")
+text = "Apps"
+
+[node name="VaultBtn" type="Button" parent="TabBar/TabButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_tab_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_pressed")
+text = "Vault"

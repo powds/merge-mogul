@@ -1,4 +1,4 @@
-extends Node
+extends Node2D
 ## 2048-style game board with grid logic, spawn, and merge detection
 ## Manages the 5x5 game grid, tile spawning, and merge operations
 
@@ -32,12 +32,24 @@ func _ready() -> void:
 
 # ==================== SWIPE GESTURE SUPPORT ====================
 
-## Handle touch input for swipe gestures on mobile
+## Handle all input events (touch, swipe, keyboard)
 func _input(event: InputEvent) -> void:
+	# Screen touch/drag for mobile
 	if event is InputEventScreenDrag:
 		_handle_screen_drag(event)
 	elif event is InputEventScreenTouch:
 		_handle_screen_touch(event)
+	# Keyboard input for desktop
+	elif event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_LEFT, KEY_A:
+				slide_left()
+			KEY_RIGHT, KEY_D:
+				slide_right()
+			KEY_UP, KEY_W:
+				slide_up()
+			KEY_DOWN, KEY_S:
+				slide_down()
 
 ## Handle screen touch events (touch start/end)
 func _handle_screen_touch(event: InputEventScreenTouch) -> void:
@@ -104,6 +116,7 @@ func execute_swipe(direction: Vector2i) -> bool:
 	if merges.size() > 0 or _board_changed_since_last_check:
 		# Spawn new tile after swipe
 		spawn_tile()
+		_board_changed_since_last_check = false
 		
 		# Check for game over
 		if not has_possible_moves():
@@ -164,6 +177,7 @@ func spawn_tile() -> Vector2i:
 	# 90% chance of spawning a 2, 10% chance of spawning a 4
 	var value = 2 if randf() < 0.9 else 4
 	grid[pos.y][pos.x] = value
+	_board_changed_since_last_check = true
 	tile_spawned.emit(pos, value)
 	board_changed.emit()
 	return pos
@@ -174,6 +188,7 @@ func clear_board() -> void:
 		for x in range(GRID_SIZE):
 			grid[y][x] = 0
 	score = 0
+	_board_changed_since_last_check = true
 	board_changed.emit()
 
 ## Initialize a new game with two starting tiles
@@ -349,6 +364,7 @@ func merge(item1: MergeItem, item2: MergeItem) -> bool:
 	
 	# Emit merge signal with actual value
 	tile_merged.emit(pos1, new_value, [pos1, pos2])
+	_board_changed_since_last_check = true
 	board_changed.emit()
 	
 	return true
@@ -366,6 +382,7 @@ func swap(item1: MergeItem, item2: MergeItem) -> bool:
 	var temp = grid[pos1.y][pos1.x]
 	grid[pos1.y][pos1.x] = grid[pos2.y][pos2.x]
 	grid[pos2.y][pos2.x] = temp
+	_board_changed_since_last_check = true
 	
 	board_changed.emit()
 	return true
@@ -386,16 +403,4 @@ func grid_to_world(grid_pos: Vector2i) -> Vector2:
 		position.y + grid_pos.y * CELL_SIZE + CELL_SIZE / 2
 	)
 
-# ==================== KEYBOARD INPUT ====================
-
-func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		match event.keycode:
-			KEY_LEFT, KEY_A:
-				slide_left()
-			KEY_RIGHT, KEY_D:
-				slide_right()
-			KEY_UP, KEY_W:
-				slide_up()
-			KEY_DOWN, KEY_S:
-				slide_down()
+# ==================== (keyboard input moved to _input above) ====================

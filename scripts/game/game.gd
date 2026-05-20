@@ -6,9 +6,19 @@ extends Node2D
 @onready var board: Node = $Board
 @onready var ui: CanvasLayer = $UI
 
+# Particle system for merge effects
+@onready var merge_particles: CPUParticles2D = $MergeParticles
+
 # Game state
 var move_count: int = 0
 var is_game_active: bool = false
+
+# Screen shake
+var shake_amount: float = 0.0
+var shake_duration: float = 0.0
+var shake_timer: float = 0.0
+var shake_offset: Vector2 = Vector2.ZERO
+const SHAKE_DECAY: float = 0.9
 
 # Item management
 var item_scene: PackedScene = preload("res://scenes/game/item.tscn")
@@ -40,6 +50,19 @@ func _setup_board() -> void:
 	elif board.has_method("clear_board"):
 		board.clear_board()
 
+func _process(delta: float) -> void:
+	# Update screen shake
+	if shake_timer > 0:
+		shake_timer -= delta
+		var current_shake = shake_amount * (shake_timer / shake_duration)
+		shake_offset = Vector2(
+			randf() * current_shake * 2 - current_shake,
+			randf() * current_shake * 2 - current_shake
+		)
+		if shake_timer <= 0:
+			shake_offset = Vector2.ZERO
+			shake_amount = 0.0
+
 func _connect_signals() -> void:
 	if board.has_signal("tile_spawned"):
 		board.tile_spawned.connect(_on_tile_spawned)
@@ -62,7 +85,7 @@ func _connect_signals() -> void:
 		ui.watch_ad_requested.connect(_on_watch_ad)
 
 func _load_or_start_game() -> void:
-	if GameManager.current_state != GameManager.GameState.IDLE:
+	if GameManager.current_state != GameManager.GameState.MENU:
 		restore_game_state()
 	else:
 		_start_new_game()
@@ -134,6 +157,15 @@ func _snap_item_to_grid(item: Node) -> void:
 	var grid_pos = _world_to_grid(item.position)
 	item.position = _grid_to_world(grid_pos)
 
+func _smoothSnap(item: Node) -> void:
+	"""Smooth snap animation for item to its grid position"""
+	var target_pos = _grid_to_world(_world_to_grid(item.position))
+	
+	var tween = create_tween()
+	tween.set_ease(Tween.EASE_OUT)
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(item, "position", target_pos, 0.15)
+
 func queue_free_item(item: Node) -> void:
 	items.erase(item)
 	item.queue_free()
@@ -148,6 +180,51 @@ func _world_to_grid(world_pos: Vector2) -> Vector2i:
 		int((world_pos.x - GRID_OFFSET.x) / CELL_SIZE),
 		int((world_pos.y - GRID_OFFSET.y) / CELL_SIZE)
 	)
+
+func _spawn_merge_effect(world_pos: Vector2, tier: int) -> void:
+	"""Spawn particle effect at merge location"""
+	if not merge_particles:
+		return
+	
+	# Configure particles based on tier
+	var color = _get_tier_color(tier)
+	merge_particles.modulate = color
+	merge_particles.position = world_pos
+	merge_particles.restart()
+
+func _get_tier_color(tier: int) -> Color:
+	"""Get color for tier (matches MergeItem.TIER_COLORS)"""
+	var colors = [
+		Color("#89CFF0"),  # 0 - Baby Blue
+		Color("#7B68EE"),  # 1 - Medium Slate Blue
+		Color("#00CED1"),  # 2 - Dark Turquoise
+		Color("#32CD32"),  # 3 - Lime Green
+		Color("#FFD700"),  # 4 - Gold
+		Color("#FF6B35"),  # 5 - Orange Red
+		Color("#9B59B6"),  # 6 - Purple
+		Color("#FFD700")   # 7 - Gold
+	]
+	return colors[clampi(tier, 0, 7)]
+
+func _trigger_screen_shake(intensity: float, duration: float) -> void:
+	"""Trigger screen shake effect"""
+	shake_amount = intensity
+	shake_duration = duration
+	shake_timer = duration
+
+func _animate_level_up(item: Node) -> void:
+	"""Animate item scale pulse on level up"""
+	if not item.has_method("pulse_scale"):
+		return
+	
+	# Create tween for scale animation
+	var tween = create_tween()
+	tween.tween_property(item, "scale", Vector2(1.3, 1.3), 0.1)
+	tween.tween_property(item, "scale", Vector2(1.0, 1.0), 0.15)
+	
+	# Also flash white
+	if item.has_method("flash_white"):
+		item.flash_white()
 
 func _on_item_dragged(item: Node) -> void:
 	item.z_index = 100
@@ -165,15 +242,32 @@ func _on_item_dropped(item: Node, target: Node) -> void:
 			# Merge succeeded - update the surviving item's tier and remove consumed item
 			# Note: board.merge() updates the grid and emits tile_merged signal
 			# We update tier here since it's a visual property on the item
-			item.tier = item_tier + 1  # Tier increases by 1
+			var new_tier = item_tier + 1  # Tier increases by 1
+			item.tier = new_tier
+			
+			# Get world position for effects (before snapping)
+			var effect_pos = item.position
+			
 			_snap_item_to_grid(item)
 			queue_free_item(target)
+			
+			# Trigger effects for merge
+			_spawn_merge_effect(effect_pos, new_tier)
+			_animate_level_up(item)
+			
+			# Screen shake for tier 4+ (big merges)
+			if new_tier >= 4:
+				_trigger_screen_shake(8.0, 0.3)
+			elif new_tier >= 3:
+				_trigger_screen_shake(4.0, 0.2)
+			
 			# Coins are awarded via _on_tile_merged signal handler
 	else:
 		# Different tier - swap positions
 		if board.has_method("swap") and board.swap(item, target):
-			_snap_item_to_grid(item)
-			_snap_item_to_grid(target)
+			# Smooth animation for swap
+			_smoothSnap(item)
+			_smoothSnap(target)
 	
 	# Update move count after merge/swap
 	move_count += 1
@@ -224,6 +318,8 @@ func _handle_game_over() -> void:
 	if ui.has_method("show_game_over"):
 		ui.show_game_over(board.score if board.has_method("score") else 0)
 	GameManager.game_over()
+	# Show interstitial ad on game over
+	AdManager.load_interstitial()
 
 func _on_watch_ad() -> void:
 	# Award +50 coins via AdManager

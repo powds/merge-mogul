@@ -57,7 +57,7 @@ func _query_media_store() -> void:
 	}
 	
 	# Use Android MediaStore query via ProjectSettings
-	if DisplayServer.has_feature(DisplayServer.FEATURE_ANDROID):
+	if OS.get_name() == "Android":
 		_query_android_media(image_uri_query, "image")
 		_query_android_media(video_uri_query, "video")
 	else:
@@ -66,12 +66,13 @@ func _query_media_store() -> void:
 
 func _query_android_media(query: Dictionary, media_type: String) -> void:
 	## Query MediaStore on Android using JNI.
-	var jni_env = JavaSingletonBridge.get_jni_environment()
+	## Uses Godot 4's JavaClassBridge for Android interop.
+	var jni_env = Engine.get_singleton("JavaSingletonBridge")
 	if not jni_env:
-		push_error("Failed to get JNI environment for MediaStore query")
+		push_error("Failed to get JavaSingletonBridge singleton")
 		return
 	
-	var android_context = JavaSingletonBridge.get_context()
+	var android_context = jni_env.get_context()
 	if not android_context:
 		push_error("Failed to get Android context for MediaStore query")
 		return
@@ -101,12 +102,12 @@ func _query_android_media(query: Dictionary, media_type: String) -> void:
 		return
 	
 	# Process cursor results
-	var id_col := cursor.getColumnIndex("_id")
-	var data_col := cursor.getColumnIndex("_data")
-	var name_col := cursor.getColumnIndex("_display_name")
-	var date_col := cursor.getColumnIndex("date_added")
-	var mime_col := cursor.getColumnIndex("mime_type")
-	var size_col := cursor.getColumnIndex("size")
+	var id_col: int = cursor.getColumnIndex("_id")
+	var data_col: int = cursor.getColumnIndex("_data")
+	var name_col: int = cursor.getColumnIndex("_display_name")
+	var date_col: int = cursor.getColumnIndex("date_added")
+	var mime_col: int = cursor.getColumnIndex("mime_type")
+	var size_col: int = cursor.getColumnIndex("size")
 	
 	var jni_env_raw = jni_env
 	var cursor_count = cursor.getCount()
@@ -198,7 +199,7 @@ func _create_thumbnail_button(index: int) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(_thumbnail_size)
 	button.expand_icon = true
-	button.alignment = Button.ALIGNMENT_CENTER
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	
 	var icon := _get_thumbnail_for_index(index)
 	button.icon = icon
@@ -221,7 +222,7 @@ func _get_thumbnail_for_index(index: int) -> ImageTexture:
 func _generate_thumbnail(media: Dictionary) -> Image:
 	## Generate thumbnail for a media file.
 	var img := Image.new()
-	var path := media["path"]
+	var path: String = media["path"]
 	
 	if media["type"] == "image":
 		var err := img.load(path)
@@ -239,7 +240,8 @@ func _generate_thumbnail(media: Dictionary) -> Image:
 		img.fill_rect(Rect2i(center - size / 2, size), play_color)
 	
 	# Scale down to thumbnail size
-	img.resize(_thumbnail_size.x, _thumbnail_size.y, Image.INTERPOLATION_BILINEAR)
+	var _interp := Image.INTERPOLATION_BILINEAR
+	img.resize(_thumbnail_size.x, _thumbnail_size.y, _interp)
 	return img
 
 func _update_display() -> void:
@@ -310,11 +312,11 @@ func _toggle_fullscreen() -> void:
 		fullscreen_button.text = "Fullscreen"
 	# Toggle fullscreen mode - in a real implementation this would
 	# switch the TextureRect to cover the entire screen
-	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE if _is_fullscreen else TextureRect.EXPAND_OVERRIDE_SIZE
+	texture_rect.expand_mode = TextureRect.SIZE_EXPAND if _is_fullscreen else TextureRect.SIZE_FILL
 
 func open_file(path: String) -> void:
 	## Open a file with the system native viewer.
-	if DisplayServer.has_feature(DisplayServer.FEATURE_ANDROID):
+	if OS.get_name() == "Android":
 		_open_file_android(path)
 	else:
 		_open_file_desktop(path)

@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://dfilebrowser001"]
 
-[ext_resource type="Script" path="res://scenes/utility/file_browser.gd" id="1_fb_script"]
+[ext_resource type="Script" path="res://scripts/utility/file_browser.gd" id="1_fb_script"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.15, 0.15, 0.15, 0.95)
@@ -56,26 +56,69 @@ theme_override_constants/separation = 8
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="PathLabel" type="Label" parent="Panel/VBoxContainer/Header"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "/user/home"
-vertical_alignment = 1
-
-[node name="RefreshButton" type="Button" parent="Panel/VBoxContainer/Header"]
+[node name="BackButton" type="Button" parent="Panel/VBoxContainer/Header"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
-text = "Refresh"
+text = "←"
+
+[node name="UpButton" type="Button" parent="Panel/VBoxContainer/Header"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "↑"
 
 [node name="HomeButton" type="Button" parent="Panel/VBoxContainer/Header"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 text = "Home"
 
-[node name="UpButton" type="Button" parent="Panel/VBoxContainer/Header"]
+[node name="RefreshButton" type="Button" parent="Panel/VBoxContainer/Header"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
-text = "Up"
+text = "Refresh"
+
+[node name="PathLabel" type="Label" parent="Panel/VBoxContainer/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "/"
+vertical_alignment = 1
+
+[node name="OperationsBar" type="HBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="CutButton" type="Button" parent="Panel/VBoxContainer/OperationsBar"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "Cut"
+
+[node name="CopyButton" type="Button" parent="Panel/VBoxContainer/OperationsBar"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "Copy"
+
+[node name="PasteButton" type="Button" parent="Panel/VBoxContainer/OperationsBar"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "Paste"
+
+[node name="DeleteButton" type="Button" parent="Panel/VBoxContainer/OperationsBar"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "Delete"
+
+[node name="RenameButton" type="Button" parent="Panel/VBoxContainer/OperationsBar"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "Rename"
+
+[node name="NewFolderButton" type="Button" parent="Panel/VBoxContainer/OperationsBar"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "New Folder"
+
+[node name="Spacer" type="Control" parent="Panel/VBoxContainer/OperationsBar"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Panel/VBoxContainer"]
 layout_mode = 2
@@ -105,7 +148,7 @@ layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 text = "Cancel"
 
-[node name="Spacer" type="Control" parent="Panel/VBoxContainer/Footer"]
+[node name="Spacer2" type="Control" parent="Panel/VBoxContainer/Footer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -113,10 +156,3 @@ size_flags_horizontal = 3
 layout_mode = 2
 text = "Ready"
 horizontal_alignment = 2
-
-[connection signal="pressed" from="Panel/VBoxContainer/Header/RefreshButton" to="." method="_on_refresh_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Header/HomeButton" to="." method="_on_home_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Header/UpButton" to="." method="_on_up_pressed"]
-[connection signal="item_activated" from="Panel/VBoxContainer/HSplitContainer/FileList" to="." method="_on_file_item_activated"]
-[connection signal="pressed" from="Panel/VBoxContainer/Footer/OpenButton" to="." method="_on_open_pressed"]
-[connection signal="pressed" from="Panel/VBoxContainer/Footer/CancelButton" to="." method="_on_cancel_pressed"]

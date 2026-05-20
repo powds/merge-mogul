@@ -17,7 +17,7 @@ var _clipboard: Dictionary = { "action": ClipboardAction.NONE, "source_uri": "",
 var _is_saf_mode: bool = false
 
 ## Get file info dictionary
-static func get_file_info(path: String, uri: String = "") -> Dictionary:
+func get_file_info(path: String, uri: String = "") -> Dictionary:
 	var info: Dictionary = {
 		"name": "",
 		"path": path,
@@ -65,7 +65,7 @@ func browse_directory() -> bool:
 		return true
 	else:
 		# On desktop, just navigate to user home
-		return navigate_to(OS.get_system_data_dir())
+		return navigate_to(OS.get_data_dir())
 
 ## List entries in a directory
 func list_directory(dir_path: String, dir_uri: String = "") -> Array:
@@ -796,8 +796,7 @@ func _read_saf_file_text(uri: String) -> String:
 		return ""
 	
 	var text = ""
-	var decoder = EncodingUTF8.new()
-	text = decoder.decode(bytes).get_string(0, bytes.size())
+	text = bytes.get_string_from_utf8()
 	return text
 
 func _read_saf_file_bytes(uri: String) -> PackedByteArray:
@@ -915,7 +914,8 @@ func generate_file_preview(entry: Dictionary, max_size: Vector2i = Vector2i(128,
 			img = _create_placeholder_image(max_size, ext)
 	
 	# Resize to thumbnail
-	img.resize(max_size.x, max_size.y, Image.INTERPOLATION_BILINEAR)
+	var _interp := Image.INTERPOLATION_BILINEAR
+	img.resize(max_size.x, max_size.y, _interp)
 	texture.set_image(img)
 	return texture
 
