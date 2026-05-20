@@ -14,12 +14,107 @@ const GRID_SIZE: int = 5
 const CELL_SIZE: int = 64
 const WIN_VALUE: int = 2048
 
+# Swipe configuration
+const MIN_SWIPE_DISTANCE: float = 30.0
+const SWIPE_DIRECTION_THRESHOLD: float = 0.5
+
 # Grid state: 2D array where 0 = empty, value = tile value
 var grid: Array = []
 var score: int = 0
 
+# Swipe state
+var _swipe_start: Vector2 = Vector2.ZERO
+var _is_swiping: bool = false
+var _last_drag_pos: Vector2 = Vector2.ZERO
+
 func _ready() -> void:
 	_init_grid()
+
+# ==================== SWIPE GESTURE SUPPORT ====================
+
+## Handle touch input for swipe gestures on mobile
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenDrag:
+		_handle_screen_drag(event)
+	elif event is InputEventScreenTouch:
+		_handle_screen_touch(event)
+
+## Handle screen touch events (touch start/end)
+func _handle_screen_touch(event: InputEventScreenTouch) -> void:
+	if event.pressed:
+		# Touch started
+		_swipe_start = event.position
+		_is_swiping = true
+		_last_drag_pos = event.position
+	else:
+		# Touch released - check if valid swipe
+		if _is_swiping:
+			_check_swipe_complete(event.position)
+		_is_swiping = false
+
+## Handle continuous screen drag events
+func _handle_screen_drag(event: InputEventScreenDrag) -> void:
+	if _is_swiping:
+		_last_drag_pos = event.position
+
+## Check if swipe distance and direction are valid, then execute move
+func _check_swipe_complete(end_pos: Vector2) -> void:
+	var swipe_vector = end_pos - _swipe_start
+	var swipe_distance = swipe_vector.length()
+	
+	if swipe_distance < MIN_SWIPE_DISTANCE:
+		return
+	
+	var direction = _get_swipe_direction(swipe_vector)
+	if direction != Vector2i.ZERO:
+		execute_swipe(direction)
+
+## Determine swipe direction (up/down/left/right) from swipe vector
+func _get_swipe_direction(swipe_vector: Vector2) -> Vector2i:
+	var normalized = swipe_vector.normalized()
+	
+	# Determine primary direction based on largest component
+	if abs(normalized.x) > abs(normalized.y):
+		# Horizontal swipe
+		if abs(normalized.x) > SWIPE_DIRECTION_THRESHOLD:
+			return Vector2i(1 if normalized.x > 0 else -1, 0)
+	else:
+		# Vertical swipe
+		if abs(normalized.y) > SWIPE_DIRECTION_THRESHOLD:
+			return Vector2i(0, 1 if normalized.y > 0 else -1)
+	
+	return Vector2i.ZERO
+
+## Execute a swipe in the given direction
+func execute_swipe(direction: Vector2i) -> bool:
+	var merges: Array = []
+	
+	match direction:
+		Vector2i(1, 0):
+			merges = slide_right()
+		Vector2i(-1, 0):
+			merges = slide_left()
+		Vector2i(0, 1):
+			merges = slide_down()
+		Vector2i(0, -1):
+			merges = slide_up()
+		_:
+			return false
+	
+	if merges.size() > 0 or _board_changed_since_last_check:
+		# Spawn new tile after swipe
+		spawn_tile()
+		
+		# Check for game over
+		if not has_possible_moves():
+			no_moves_available.emit()
+		
+		return true
+	
+	return false
+
+# Track board changes for swipe completion
+var _board_changed_since_last_check: bool = false
 
 func _init_grid() -> void:
 	grid.clear()
@@ -38,6 +133,7 @@ func get_tile(pos: Vector2i) -> int:
 func set_tile(pos: Vector2i, value: int) -> void:
 	if _is_valid_pos(pos):
 		grid[pos.y][pos.x] = value
+		_board_changed_since_last_check = true
 		board_changed.emit()
 
 ## Check if a position is within the grid bounds
@@ -244,13 +340,15 @@ func merge(item1: MergeItem, item2: MergeItem) -> bool:
 	var pos1 = item1.grid_position
 	var pos2 = item2.grid_position
 	
-	# Update grid
-	var new_tier = item1.tier + 1
-	grid[pos1.y][pos1.x] = new_tier
+	# Convert tier to 2048-style value (tier 0 = 2, tier 1 = 4, etc.)
+	var new_value = pow(2, item1.tier + 1)
+	
+	# Update grid with actual value, not tier
+	grid[pos1.y][pos1.x] = new_value
 	grid[pos2.y][pos2.x] = 0
 	
-	# Emit merge signal
-	tile_merged.emit(pos1, new_tier, [pos1, pos2])
+	# Emit merge signal with actual value
+	tile_merged.emit(pos1, new_value, [pos1, pos2])
 	board_changed.emit()
 	
 	return true
@@ -274,14 +372,30 @@ func swap(item1: MergeItem, item2: MergeItem) -> bool:
 
 ## Get grid position from world position
 func world_to_grid(world_pos: Vector2) -> Vector2i:
+	# Account for board offset when computing grid position
 	return Vector2i(
-		int(world_pos.x / CELL_SIZE),
-		int(world_pos.y / CELL_SIZE)
+		int((world_pos.x - position.x) / CELL_SIZE),
+		int((world_pos.y - position.y) / CELL_SIZE)
 	)
 
 ## Get world position from grid position
 func grid_to_world(grid_pos: Vector2i) -> Vector2:
+	# Account for board offset when computing world position
 	return Vector2(
-		grid_pos.x * CELL_SIZE + CELL_SIZE / 2,
-		grid_pos.y * CELL_SIZE + CELL_SIZE / 2
+		position.x + grid_pos.x * CELL_SIZE + CELL_SIZE / 2,
+		position.y + grid_pos.y * CELL_SIZE + CELL_SIZE / 2
 	)
+
+# ==================== KEYBOARD INPUT ====================
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_LEFT, KEY_A:
+				slide_left()
+			KEY_RIGHT, KEY_D:
+				slide_right()
+			KEY_UP, KEY_W:
+				slide_up()
+			KEY_DOWN, KEY_S:
+				slide_down()

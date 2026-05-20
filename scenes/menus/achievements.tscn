@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://dachievements001"]
+[gd_scene load_steps=7 format=3 uid="uid://dachievements001"]
 
 [ext_resource type="Script" path="res://scenes/menus/achievements.gd" id="1_achievements"]
 
@@ -33,6 +33,18 @@ border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.6, 0.6, 0.6, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_pressed"]
+bg_color = Color(0.15, 0.15, 0.15, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.3, 0.3, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
@@ -111,6 +123,7 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
 text = "Back"
 
 [connection signal="pressed" from="Panel/BackButton" to="." method="_on_back_pressed"]

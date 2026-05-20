@@ -56,6 +56,10 @@ var drag_offset: Vector2 = Vector2.ZERO
 var original_position: Vector2 = Vector2.ZERO
 var current_scale: Vector2 = Vector2.ONE
 
+# Grid snapping properties
+var snap_to_grid: bool = false
+var grid_size: Vector2 = Vector2(64, 64)
+
 # References
 var board: Node = null
 
@@ -192,11 +196,26 @@ func _end_drag() -> void:
 			if target.tier == tier:
 				# Same tier - attempt merge
 				if board and board.has_method("merge"):
-					board.merge(self, target)
+					if board.merge(self, target):
+						# Successful merge: this item moves to target's grid position
+						var target_pos = target.grid_position
+						target.queue_free()  # Remove merged target item
+						global_position = board.grid_to_world(target_pos)
+						_snap_to_grid_position()
 			else:
 				# Different tier - attempt swap
 				if board and board.has_method("swap"):
-					board.swap(self, target)
+					if board.swap(self, target):
+						# Successful swap: both items snap to their new grid positions
+						var my_grid_pos = self.grid_position
+						var target_grid_pos = target.grid_position
+						self.global_position = board.grid_to_world(target_grid_pos)
+						target.global_position = board.grid_to_world(my_grid_pos)
+						_snap_to_grid_position()
+						target._snap_to_grid_position()
+		else:
+			# No target - just snap to grid at current position
+			_snap_to_grid_position()
 
 func _find_target_item() -> MergeItem:
 	var space_state = get_world_2d().direct_space_state
@@ -221,3 +240,12 @@ func get_tier_name() -> String:
 
 func get_tier_color() -> Color:
 	return TIER_COLORS[tier]
+
+func _snap_to_grid_position() -> void:
+	# Use board's grid_to_world if available, otherwise compute directly
+	var grid_pos = grid_position
+	if grid_pos.x >= 0 and grid_pos.y >= 0:
+		if board and board.has_method("grid_to_world"):
+			global_position = board.grid_to_world(grid_pos)
+		else:
+			global_position = Vector2(grid_pos.x * grid_size.x + grid_size.x / 2, grid_pos.y * grid_size.y + grid_size.y / 2)

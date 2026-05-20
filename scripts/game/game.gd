@@ -14,10 +14,10 @@ var is_game_active: bool = false
 var item_scene: PackedScene = preload("res://scenes/game/item.tscn")
 var items: Array[Node] = []
 
-# Board config
+# Board config (must match board.gd GRID_SIZE)
 const GRID_DIMENSION: int = 5
 const CELL_SIZE: int = 64
-const GRID_OFFSET: Vector2 = Vector2(0, 0)
+const GRID_OFFSET: Vector2 = Vector2(128, 100)  # Matches Board node position in game.tscn
 
 # Merge rewards config
 const MERGE_COIN_REWARDS: Dictionary = {
@@ -88,12 +88,15 @@ func _spawn_initial_items(count: int) -> void:
 		if empty_pos != Vector2i(-1, -1):
 			_spawn_item_at(empty_pos)
 
-func _spawn_item_at(grid_pos: Vector2i) -> void:
+func _spawn_item_at(grid_pos: Vector2i, value: int = 2) -> void:
 	var world_pos = _grid_to_world(grid_pos)
 	var item = item_scene.instantiate()
 	item.position = world_pos
 	item.snap_to_grid = true
 	item.grid_size = Vector2(CELL_SIZE, CELL_SIZE)
+	
+	# Set tier based on value (2=0, 4=1, 8=2, etc.)
+	item.tier = _value_to_tier(value)
 	
 	# Connect to item signals (dragged and dropped from MergeItem)
 	item.dragged.connect(_on_item_dragged)
@@ -103,7 +106,7 @@ func _spawn_item_at(grid_pos: Vector2i) -> void:
 	items.append(item)
 	
 	if board.has_method("set_tile"):
-		board.set_tile(grid_pos, 2)
+		board.set_tile(grid_pos, value)
 
 func _clear_items() -> void:
 	for item in items:
@@ -127,6 +130,19 @@ func _grid_to_world(grid_pos: Vector2i) -> Vector2:
 		GRID_OFFSET.y + grid_pos.y * CELL_SIZE + CELL_SIZE / 2
 	)
 
+func _snap_item_to_grid(item: Node) -> void:
+	var grid_pos = _world_to_grid(item.position)
+	item.position = _grid_to_world(grid_pos)
+
+func queue_free_item(item: Node) -> void:
+	items.erase(item)
+	item.queue_free()
+
+func _award_merge_coins(tier: int) -> void:
+	if MERGE_COIN_REWARDS.has(tier):
+		var reward = MERGE_COIN_REWARDS[tier]
+		GameManager.add_coins(reward)
+
 func _world_to_grid(world_pos: Vector2) -> Vector2i:
 	return Vector2i(
 		int((world_pos.x - GRID_OFFSET.x) / CELL_SIZE),
@@ -138,8 +154,26 @@ func _on_item_dragged(item: Node) -> void:
 
 func _on_item_dropped(item: Node, target: Node) -> void:
 	item.z_index = 0
-	# Note: MergeItem internally calls board.merge() or board.swap() in _end_drag()
-	# This callback is for additional game-level handling if needed
+	
+	# Get tier before potential merge/swap
+	var item_tier = item.tier
+	var target_tier = target.tier
+	
+	if item_tier == target_tier:
+		# Same tier - attempt merge
+		if board.has_method("merge") and board.merge(item, target):
+			# Merge succeeded - update the surviving item's tier and remove consumed item
+			# Note: board.merge() updates the grid and emits tile_merged signal
+			# We update tier here since it's a visual property on the item
+			item.tier = item_tier + 1  # Tier increases by 1
+			_snap_item_to_grid(item)
+			queue_free_item(target)
+			# Coins are awarded via _on_tile_merged signal handler
+	else:
+		# Different tier - swap positions
+		if board.has_method("swap") and board.swap(item, target):
+			_snap_item_to_grid(item)
+			_snap_item_to_grid(target)
 	
 	# Update move count after merge/swap
 	move_count += 1
@@ -147,7 +181,7 @@ func _on_item_dropped(item: Node, target: Node) -> void:
 	_check_game_over()
 
 func _on_tile_spawned(pos: Vector2i, value: int) -> void:
-	_spawn_item_at(pos)
+	_spawn_item_at(pos, value)
 	_check_game_over()
 
 func _on_tile_merged(pos: Vector2i, value: int, merged_from: Array) -> void:
@@ -159,7 +193,7 @@ func _on_tile_merged(pos: Vector2i, value: int, merged_from: Array) -> void:
 	_update_ui()
 
 func _value_to_tier(value: int) -> int:
-	# Convert 2048-style value to tier (2=1, 4=2, 8=3, 16=4, etc.)
+	# Convert 2048-style value to tier (2=0, 4=1, 8=2, 16=3, etc.)
 	var tier = 0
 	var v = value
 	while v > 1:
@@ -221,7 +255,7 @@ func _update_ui() -> void:
 		ui.update_moves(move_count)
 	
 	if ui.has_method("update_level"):
-		ui.update_level(GameManager.current_level)
+		ui.update_level(GameManager.level)
 	
 	if ui.has_method("update_coins"):
 		ui.update_coins(GameManager.coins)

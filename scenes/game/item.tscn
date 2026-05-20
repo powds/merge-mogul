@@ -15,6 +15,7 @@ script = ExtResource("1_item_script")
 [node name="Sprite" type="Sprite2D" parent="."]
 texture = SubResource("AtlasTexture_icon")
 offset = Vector2(32, 32)
+visible = false  # Hidden - we use _draw() instead
 
 [node name="Hitbox" type="Area2D" parent="."]
 

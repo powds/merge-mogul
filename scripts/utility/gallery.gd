@@ -65,9 +65,95 @@ func _query_media_store() -> void:
 		_scan_directory("user://", SUPPORTED_IMAGE_EXTENSIONS + SUPPORTED_VIDEO_EXTENSIONS)
 
 func _query_android_media(query: Dictionary, media_type: String) -> void:
-	## Query MediaStore on Android using native methods.
-	## ContentResolver queries through JNI in production.
-	pass
+	## Query MediaStore on Android using JNI.
+	var jni_env = JavaSingletonBridge.get_jni_environment()
+	if not jni_env:
+		push_error("Failed to get JNI environment for MediaStore query")
+		return
+	
+	var android_context = JavaSingletonBridge.get_context()
+	if not android_context:
+		push_error("Failed to get Android context for MediaStore query")
+		return
+	
+	# Get ContentResolver from context
+	var content_resolver = android_context.getContentResolver()
+	if not content_resolver:
+		push_error("Failed to get ContentResolver")
+		return
+	
+	# Build MediaStore query URI based on media type
+	var uri := ""
+	var projection := PackedStringArray()
+	
+	if media_type == "image":
+		uri = "android.provider.MediaStore$Images$Media$EXTERNAL_CONTENT_URI"
+		projection = ["_id", "_data", "_display_name", "date_added", "mime_type", "size"]
+	else:
+		uri = "android.provider.MediaStore$Video$Media$EXTERNAL_CONTENT_URI"
+		projection = ["_id", "_data", "_display_name", "date_added", "mime_type", "duration", "size"]
+	
+	# Execute query through ContentResolver
+	var cursor = content_resolver.query(uri, projection, null, null, "date_added DESC")
+	
+	if not cursor:
+		push_warning("MediaStore query returned no results for: " + media_type)
+		return
+	
+	# Process cursor results
+	var id_col := cursor.getColumnIndex("_id")
+	var data_col := cursor.getColumnIndex("_data")
+	var name_col := cursor.getColumnIndex("_display_name")
+	var date_col := cursor.getColumnIndex("date_added")
+	var mime_col := cursor.getColumnIndex("mime_type")
+	var size_col := cursor.getColumnIndex("size")
+	
+	var jni_env_raw = jni_env
+	var cursor_count = cursor.getCount()
+	
+	for i in range(cursor_count):
+		if cursor.moveToPosition(i):
+			var file_path := ""
+			if data_col >= 0:
+				var data_val = cursor.getString(data_col)
+				if data_val:
+					file_path = str(data_val)
+			
+			if file_path == "" or not _file_exists(file_path):
+				continue
+			
+			var file_name := ""
+			if name_col >= 0:
+				var name_val = cursor.getString(name_col)
+				if name_val:
+					file_name = str(name_val)
+			
+			var file_date := 0
+			if date_col >= 0:
+				file_date = cursor.getInt(date_col)
+			
+			var file_size := 0
+			if size_col >= 0:
+				file_size = cursor.getInt(size_col)
+			
+			_media_files.append({
+				"path": file_path,
+				"name": file_name,
+				"type": media_type,
+				"size": file_size,
+				"date": file_date
+			})
+	
+	cursor.close()
+
+
+func _file_exists(path: String) -> bool:
+	## Check if a file exists at the given path.
+	# Use DirAccess to check file existence
+	var dir := DirAccess.open(path.get_base_dir())
+	if dir == null:
+		return false
+	return dir.file_exists(path)
 
 func _scan_directory(path: String, extensions: Array[String]) -> void:
 	## Fallback scanner for desktop platforms.

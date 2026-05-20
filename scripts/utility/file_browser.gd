@@ -55,14 +55,36 @@ static func get_file_info(path: String, uri: String = "") -> Dictionary:
 	
 	return info
 
+## Browse for a directory (SAF tree picker entry point)
+func browse_directory() -> bool:
+	if _is_android():
+		# Trigger Android SAF directory picker
+		# The actual picker would be triggered via Java callback
+		# For now, emit signal to request directory selection UI
+		current_path_changed.emit("SAF picker requested")
+		return true
+	else:
+		# On desktop, just navigate to user home
+		return navigate_to(OS.get_system_data_dir())
+
 ## List entries in a directory
 func list_directory(dir_path: String, dir_uri: String = "") -> Array:
 	var entries: Array = []
 	
-	if dir_uri != "" and _is_saf_mode:
-		entries = _list_saf_directory(dir_uri)
+	# Determine if we're in SAF mode based on URI presence or path type
+	var use_saf = _is_saf_mode
+	if dir_uri != "":
+		use_saf = true
 	elif _is_android() and is_android_saf_uri(dir_path):
-		entries = _list_saf_directory(dir_path)
+		use_saf = true
+	
+	if use_saf:
+		var target_uri = dir_uri if dir_uri != "" else (_current_uri if _is_saf_mode else "")
+		if target_uri != "":
+			entries = _list_saf_directory(target_uri)
+		else:
+			# Fall back to local
+			entries = _list_local_directory(dir_path)
 	else:
 		entries = _list_local_directory(dir_path)
 	
@@ -436,7 +458,50 @@ func _delete_file_local(path: String) -> bool:
 func _get_document_file_for_uri(uri: String):
 	if not _is_android():
 		return null
-	return Engine.get_singleton(" SAF ").getDocumentFile(uri)
+	# Use JNI bridge to get DocumentFile via ContentResolver
+	var jni_env = _get_jni_environment()
+	if not jni_env:
+		return null
+	# Call Java method to get DocumentFile from tree URI
+	var SAF_class = jni_env.find_class("com.godot SAF ".replace(" ", ""))
+	# Actually use JavaSingletonBridge for proper JNI access
+	return _get_document_file_via_jni(uri)
+
+func _get_jni_environment():
+	# Use the same JNI approach as app_launcher and gallery
+	if Engine.has_singleton("JavaSingletonBridge"):
+		return Engine.get_singleton("JavaSingletonBridge").get_jni_environment()
+	return null
+
+func _get_context():
+	if Engine.has_singleton("JavaSingletonBridge"):
+		return Engine.get_singleton("JavaSingletonBridge").get_context()
+	return null
+
+func _get_document_file_via_jni(tree_uri: String):
+	# Get DocumentFile using SAF via JNI
+	var jni_env = _get_jni_environment()
+	var android_context = _get_context()
+	if not jni_env or not android_context:
+		return null
+	
+	# Use DocumentsContract to get tree DocumentFile
+	var documents_contract_class = jni_env.find_class("android.provider.DocumentsContract")
+	var tree_uri_class = jni_env.find_class("android.net.Uri")
+	
+	# Build tree URI and get document file
+	var tree_uri_obj = jni_env.call_static_method(tree_uri_class, "parse", tree_uri)
+	var document_file_class = jni_env.find_class("android.content.DocumentFile")
+	
+	# Call DocumentFile.fromUri(context, uri)
+	var from_uri_method = document_file_class.get_method("fromUri", "(Landroid/content/Context;Landroid/net/Uri;)Landroid/content/DocumentFile;")
+	var doc_file = jni_env.call_method(android_context, "getContentResolver", "Landroid/content/ContentResolver;")
+	var result = jni_env.call_method(doc_file, "acquireContentProviderClient", tree_uri, "Landroid/net/Uri;")
+	
+	# Simplified: just try to get DocumentFile from SAF singleton if available
+	if Engine.has_singleton(" SAF "):
+		return Engine.get_singleton(" SAF ").getDocumentFile(tree_uri)
+	return null
 
 func _check_uri_exists(uri: String) -> bool:
 	if not _is_android():
@@ -479,42 +544,404 @@ func _is_uri_directory(uri: String) -> bool:
 func _copy_file_saf(source_uri: String, dest_parent_uri: String, name: String) -> bool:
 	if not _is_android():
 		return false
-	return Engine.get_singleton(" SAF ").copyFile(source_uri, dest_parent_uri, name)
+	# Use JNI to perform copy via DocumentFile API
+	return _saf_copy_or_move_file(source_uri, dest_parent_uri, name, false)
 
 func _move_file_saf(source_uri: String, dest_parent_uri: String, name: String) -> bool:
 	if not _is_android():
 		return false
-	return Engine.get_singleton(" SAF ").moveFile(source_uri, dest_parent_uri, name)
+	return _saf_copy_or_move_file(source_uri, dest_parent_uri, name, true)
+
+func _saf_copy_or_move_file(source_uri: String, dest_parent_uri: String, name: String, is_move: bool) -> bool:
+	# Get DocumentFile for source and destination
+	var jni_env = _get_jni_environment()
+	if not jni_env:
+		return false
+	
+	# Find android.net.Uri class and parse URIs
+	var uri_class = jni_env.find_class("android.net.Uri")
+	var source_uri_obj = jni_env.call_static_method(uri_class, "parse", "(Ljava/lang/String;)Landroid/net/Uri;", source_uri)
+	var dest_uri_obj = jni_env.call_static_method(uri_class, "parse", "(Ljava/lang/String;)Landroid/net/Uri;", dest_parent_uri)
+	
+	# Get DocumentFile classes and methods
+	var doc_file_class = jni_env.find_class("android.content.DocumentFile")
+	
+	# For copy/move, we need to use the ContentResolver to open input/output streams
+	# and copy the data. This is a simplified implementation.
+	var android_context = _get_context()
+	if not android_context:
+		return false
+	
+	var content_resolver = jni_env.call_method(android_context, "getContentResolver", "()Landroid/content/ContentResolver;")
+	if not content_resolver:
+		return false
+	
+	# Open input stream
+	var open_input_method_sig = "(Landroid/net/Uri;)Ljava/io/InputStream;"
+	var input_stream = jni_env.call_method(content_resolver, "openInputStream", open_input_method_sig, source_uri_obj)
+	
+	if not input_stream:
+		return false
+	
+	# Get output stream for destination
+	var dest_doc_file = _get_document_file_for_uri(dest_parent_uri)
+	if not dest_doc_file:
+		return false
+	
+	# Create file in destination directory
+	var create_file_method = doc_file_class.get_method("createFile", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/DocumentFile;")
+	var mime_type = _get_mime_type(name)
+	var new_file = jni_env.call_method(dest_doc_file, "createFile", create_file_method, mime_type, name)
+	
+	if not new_file:
+		# Try with generic mime type
+		create_file_method = doc_file_class.get_method("createFile", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/DocumentFile;")
+		new_file = jni_env.call_method(dest_doc_file, "createFile", create_file_method, "application/octet-stream", name)
+	
+	if not new_file:
+		return false
+	
+	# Get output URI from new file
+	var new_file_uri = jni_env.call_method(new_file, "getUri", "()Landroid/net/Uri;")
+	var output_stream = jni_env.call_method(content_resolver, "openOutputStream", "(Landroid/net/Uri;)Ljava/io/OutputStream;", new_file_uri)
+	
+	if not output_stream:
+		return false
+	
+	# Copy data from input to output
+	var buffer_size = 8192
+	var bytes_copied = _copy_stream_data(jni_env, input_stream, output_stream, buffer_size)
+	
+	# Close streams
+	jni_env.call_method(input_stream, "close", "()V")
+	jni_env.call_method(output_stream, "close", "()V")
+	
+	if is_move:
+		# Delete source file after successful copy
+		_delete_saf_file_by_uri(source_uri)
+	
+	return bytes_copied > 0
+
+func _copy_stream_data(jni_env, input_stream, output_stream, buffer_size: int) -> int:
+	# Read from input and write to output
+	var total_bytes := 0
+	var buffer = jni_env.new_byte_array(buffer_size)
+	
+	var read_method = jni_env.get_method_id(input_stream, "read", "([B)I")
+	var write_method = jni_env.get_method_id(output_stream, "write", "([B)V")
+	
+	var bytes_read = jni_env.call_method(input_stream, "read", read_method, buffer)
+	while bytes_read > 0:
+		jni_env.call_method(output_stream, "write", write_method, buffer)
+		total_bytes += bytes_read
+		bytes_read = jni_env.call_method(input_stream, "read", read_method, buffer)
+	
+	return total_bytes
+
+func _get_mime_type(file_name: String) -> String:
+	var ext = file_name.get_extension().to_lower()
+	match ext:
+		"jpg", "jpeg":
+			return "image/jpeg"
+		"png":
+			return "image/png"
+		"gif":
+			return "image/gif"
+		"webp":
+			return "image/webp"
+		"mp4":
+			return "video/mp4"
+		"txt":
+			return "text/plain"
+		"pdf":
+			return "application/pdf"
+		"doc", "docx":
+			return "application/msword"
+		_:
+			return "application/octet-stream"
 
 func _delete_file_saf(uri: String) -> bool:
 	if not _is_android():
 		return false
-	return Engine.get_singleton(" SAF ").deleteFile(uri)
+	return _delete_saf_file_by_uri(uri)
+
+func _delete_saf_file_by_uri(uri: String) -> bool:
+	# Use ContentResolver to delete the document
+	var jni_env = _get_jni_environment()
+	if not jni_env:
+		return false
+	
+	var android_context = _get_context()
+	if not android_context:
+		return false
+	
+	var uri_class = jni_env.find_class("android.net.Uri")
+	var uri_obj = jni_env.call_static_method(uri_class, "parse", "(Ljava/lang/String;)Landroid/net/Uri;", uri)
+	
+	var content_resolver = jni_env.call_method(android_context, "getContentResolver", "()Landroid/content/ContentResolver;")
+	
+	# Use delete method on ContentResolver
+	var delete_result = jni_env.call_method(content_resolver, "delete", "(Landroid/net/Uri;Ljava/lang/String;[Ljava/lang/String;)I", uri_obj, null, null)
+	
+	return delete_result > 0
 
 func _create_folder_saf(parent_uri: String, name: String) -> bool:
 	if not _is_android():
 		return false
-	return Engine.get_singleton(" SAF ").createDirectory(parent_uri, name)
+	
+	var jni_env = _get_jni_environment()
+	if not jni_env:
+		return false
+	
+	var android_context = _get_context()
+	if not android_context:
+		return false
+	
+	# Get parent DocumentFile
+	var parent_doc = _get_document_file_for_uri(parent_uri)
+	if not parent_doc:
+		return false
+	
+	# Call createDirectory on the DocumentFile
+	var doc_file_class = jni_env.find_class("android.content.DocumentFile")
+	var create_dir_method = doc_file_class.get_method("createDirectory", "(Ljava/lang/String;)Landroid/content/DocumentFile;")
+	
+	var new_dir = jni_env.call_method(parent_doc, "createDirectory", create_dir_method, name)
+	return new_dir != null
 
 func _rename_saf(uri: String, new_name: String) -> bool:
 	if not _is_android():
 		return false
-	return Engine.get_singleton(" SAF ").renameFile(uri, new_name)
+	
+	# Rename is not directly supported by DocumentFile API
+	# We need to use a different approach - rename typically requires
+	# moving the file to a new name in the same parent directory
+	var jni_env = _get_jni_environment()
+	if not jni_env:
+		return false
+	
+	# Get the document file for the URI
+	var doc_file = _get_document_file_for_uri(uri)
+	if not doc_file:
+		return false
+	
+	# Get parent and create a new file with the new name, then delete old
+	var doc_file_class = jni_env.find_class("android.content.DocumentFile")
+	var get_parent_method = doc_file_class.get_method("getParentFile", "()Landroid/content/DocumentFile;")
+	var parent_doc = jni_env.call_method(doc_file, "getParentFile", get_parent_method)
+	
+	if not parent_doc:
+		return false
+	
+	# Get the current file name to determine mime type
+	var get_name_method = doc_file_class.get_method("getName", "()Ljava/lang/String;")
+	var old_name = jni_env.call_method(doc_file, "getName", get_name_method)
+	var mime_type = _get_mime_type(str(old_name))
+	
+	# Create new file with new name
+	var create_file_method = doc_file_class.get_method("createFile", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/DocumentFile;")
+	var new_file = jni_env.call_method(parent_doc, "createFile", create_file_method, mime_type, new_name)
+	
+	if not new_file:
+		return false
+	
+	# Copy content from old to new
+	var source_doc_uri = jni_env.call_method(doc_file, "getUri", "()Landroid/net/Uri;")
+	var new_doc_uri = jni_env.call_method(new_file, "getUri", "()Landroid/net/Uri;")
+	
+	if _copy_content_between_uris(source_doc_uri, new_doc_uri):
+		# Delete original file
+		jni_env.call_method(doc_file, "delete", "()Z")
+		return true
+	
+	return false
+
+func _copy_content_between_uris(source_uri, dest_uri) -> bool:
+	var jni_env = _get_jni_environment()
+	if not jni_env:
+		return false
+	
+	var android_context = _get_context()
+	if not android_context:
+		return false
+	
+	var content_resolver = jni_env.call_method(android_context, "getContentResolver", "()Landroid/content/ContentResolver;")
+	
+	# Open input stream
+	var input_stream = jni_env.call_method(content_resolver, "openInputStream", "(Landroid/net/Uri;)Ljava/io/InputStream;", source_uri)
+	if not input_stream:
+		return false
+	
+	# Open output stream
+	var output_stream = jni_env.call_method(content_resolver, "openOutputStream", "(Landroid/net/Uri;)Ljava/io/OutputStream;", dest_uri)
+	if not output_stream:
+		jni_env.call_method(input_stream, "close", "()V")
+		return false
+	
+	# Copy data
+	var buffer_size = 8192
+	var bytes_copied = _copy_stream_data(jni_env, input_stream, output_stream, buffer_size)
+	
+	jni_env.call_method(input_stream, "close", "()V")
+	jni_env.call_method(output_stream, "close", "()V")
+	
+	return bytes_copied > 0
 
 func _read_saf_file_text(uri: String) -> String:
 	if not _is_android():
 		return ""
-	return Engine.get_singleton(" SAF ").readTextFile(uri)
+	
+	var bytes = _read_saf_file_bytes(uri)
+	if bytes.size() == 0:
+		return ""
+	
+	var text = ""
+	var decoder = EncodingUTF8.new()
+	text = decoder.decode(bytes).get_string(0, bytes.size())
+	return text
 
 func _read_saf_file_bytes(uri: String) -> PackedByteArray:
 	if not _is_android():
 		return PackedByteArray()
-	return Engine.get_singleton(" SAF ").readBytesFile(uri)
+	
+	var jni_env = _get_jni_environment()
+	if not jni_env:
+		return PackedByteArray()
+	
+	var android_context = _get_context()
+	if not android_context:
+		return PackedByteArray()
+	
+	var uri_class = jni_env.find_class("android.net.Uri")
+	var uri_obj = jni_env.call_static_method(uri_class, "parse", "(Ljava/lang/String;)Landroid/net/Uri;", uri)
+	
+	var content_resolver = jni_env.call_method(android_context, "getContentResolver", "()Landroid/content/ContentResolver;")
+	var input_stream = jni_env.call_method(content_resolver, "openInputStream", "(Landroid/net/Uri;)Ljava/io/InputStream;", uri_obj)
+	
+	if not input_stream:
+		return PackedByteArray()
+	
+	# Read all bytes from stream
+	var bytes_result = PackedByteArray()
+	var buffer_size = 8192
+	var buffer = jni_env.new_byte_array(buffer_size)
+	var read_method = jni_env.get_method_id(input_stream, "read", "([B)I")
+	
+	var bytes_read = jni_env.call_method(input_stream, "read", read_method, buffer)
+	while bytes_read > 0:
+		# Append buffer to result
+		for i in range(bytes_read):
+			bytes_result.append(jni_env.byte_array_get(buffer, i))
+		bytes_read = jni_env.call_method(input_stream, "read", read_method, buffer)
+	
+	jni_env.call_method(input_stream, "close", "()V")
+	
+	return bytes_result
 
 func _persist_saf_uri(tree_uri: String) -> void:
 	if not _is_android():
 		return
-	Engine.get_singleton(" SAF ").persistUri(tree_uri)
+	# Persist URI permissions for SAF access
+	# This should be called after user grants directory access via SAF picker
+	var jni_env = _get_jni_environment()
+	if not jni_env:
+		return
+	
+	# Use SharedPreferences or ContentResolver to persist the tree URI
+	var android_context = _get_context()
+	if not android_context:
+		return
+	
+	# Get SharedPreferences and persist the tree URI
+	var shared_prefs = android_context.getSharedPreferences("saf_prefs", 0)
+	var edit = shared_prefs.edit()
+	edit.putString(SETTINGS_SAF_TREE_URI, tree_uri)
+	edit.apply()
+	
+	# Also try to take persistable permission using ContentResolver
+	var uri_class = jni_env.find_class("android.net.Uri")
+	var uri_obj = jni_env.call_static_method(uri_class, "parse", "(Ljava/lang/String;)Landroid/net/Uri;", tree_uri)
+	var content_resolver = android_context.getContentResolver()
+	
+	# Take persistable permission
+	var take_method_sig = "(Landroid/net/Uri;I)V"
+	content_resolver.takePersistableUriPermission(uri_obj, 1)  # Intent.FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_WRITE_URI_permission
+
+## --- File Preview Generation ---
+## Generate a preview/thumbnail for a file
+func generate_file_preview(entry: Dictionary, max_size: Vector2i = Vector2i(128, 128)) -> ImageTexture:
+	var texture := ImageTexture.new()
+	var img := Image.new()
+	
+	var file_path = entry.get("path", "")
+	var file_uri = entry.get("uri", "")
+	var file_name = entry.get("name", "")
+	var is_dir = entry.get("is_directory", false)
+	
+	if is_dir:
+		# Create folder icon placeholder
+		img.create(max_size.x, max_size.y, false, Image.FORMAT_RGBA8)
+		img.fill(Color(0.3, 0.3, 0.1))
+		texture.set_image(img)
+		return texture
+	
+	var ext = _get_extension(file_name).to_lower()
+	
+	# Handle SAF URIs on Android
+	if file_uri != "" and _is_android() and is_android_saf_uri(file_uri):
+		var preview_bytes = _read_saf_file_bytes(file_uri)
+		if preview_bytes.size() > 0:
+			img = Image.new()
+			var err = img.save_png_to_buffer()  # This won't work directly
+			# Instead, load from bytes if possible
+			if ext in ["jpg", "jpeg", "png", "webp", "bmp", "gif"]:
+				err = img.load_png_from_buffer(preview_bytes) if ext == "png" else img.load_jpg_from_buffer(preview_bytes)
+				if err != OK:
+					img = _create_placeholder_image(max_size, ext)
+			else:
+				img = _create_placeholder_image(max_size, ext)
+		else:
+			img = _create_placeholder_image(max_size, ext)
+	else:
+		# Local file
+		if FileAccess.file_exists(file_path):
+			if ext in ["jpg", "jpeg", "png", "webp", "bmp", "gif"]:
+				var err = img.load(file_path)
+				if err != OK:
+					img = _create_placeholder_image(max_size, ext)
+			else:
+				img = _create_placeholder_image(max_size, ext)
+		else:
+			img = _create_placeholder_image(max_size, ext)
+	
+	# Resize to thumbnail
+	img.resize(max_size.x, max_size.y, Image.INTERPOLATION_BILINEAR)
+	texture.set_image(img)
+	return texture
+
+func _create_placeholder_image(max_size: Vector2i, extension: String) -> Image:
+	var img := Image.create(max_size.x, max_size.y, false, Image.FORMAT_RGBA8)
+	
+	# Choose color based on file type
+	var color := Color(0.4, 0.4, 0.4)
+	match extension:
+		"jpg", "jpeg", "png", "gif", "webp", "bmp":
+			color = Color(0.2, 0.5, 0.2)  # Green for images
+		"mp4", "avi", "mkv", "mov", "webm":
+			color = Color(0.2, 0.2, 0.5)  # Blue for videos
+		"mp3", "wav", "ogg", "flac":
+			color = Color(0.5, 0.2, 0.5)  # Purple for audio
+		"txt", "doc", "docx", "pdf":
+			color = Color(0.5, 0.3, 0.2)  # Orange for documents
+	
+	img.fill(color)
+	
+	# Draw a simple icon shape
+	var center = Vector2i(max_size.x / 2, max_size.y / 2)
+	var icon_size = min(max_size.x, max_size.y) / 4
+	img.fill_rect(Rect2i(center - Vector2i(icon_size, icon_size) / 2, Vector2i(icon_size, icon_size)), Color(1, 1, 1, 0.5))
+	
+	return img
 
 ## --- Utility ---
 static func _get_extension(file_name: String) -> String:

@@ -191,39 +191,114 @@ func _save_index(index: Dictionary) -> bool:
 
 
 func _encrypt_data(data: PackedByteArray) -> PackedByteArray:
+	if _vault_key.is_empty():
+		push_error("Vault key not initialized")
+		return PackedByteArray()
+	
+	var crypto := _get_crypto()
 	var salt := _get_or_create_salt()
-	var key := _crypto.generate_random_bytes(KEY_SIZE)
-	var nonce := _crypto.generate_random_bytes(NONCE_SIZE)
-
-	var encrypted := _crypto.encrypt_aes(key, data)
+	var nonce := crypto.generate_random_bytes(NONCE_SIZE)
+	
+	# Use AES-256-CBC with HMAC-SHA256 for authenticated encryption
+	var key_hash := _sha256(_vault_key)
+	var mac_key := key_hash.slice(0, 16)  # First 16 bytes for HMAC
+	
+	# Generate derived key for this file
+	var derived_key := _hmac_sha256(mac_key, salt + nonce)
+	derived_key = derived_key.slice(0, KEY_SIZE)  # 32 bytes for AES
+	
+	# Apply PKCS7 padding
+	var padded := _pkcs7_pad(data, 16)
+	
+	# Encrypt with AES-CBC
+	var encrypted := crypto.encrypt_aes(derived_key, padded)
 	if encrypted.is_empty():
 		push_error("Encryption failed")
 		return PackedByteArray()
-
+	
+	# Create integrity MAC over salt + nonce + ciphertext
+	var mac_data := PackedByteArray()
+	mac_data.append_array(salt)
+	mac_data.append_array(nonce)
+	mac_data.append_array(encrypted)
+	var mac := _hmac_sha256(mac_key, mac_data)
+	
+	# Format: salt (16) | nonce (12) | mac (32) | ciphertext
 	var result := PackedByteArray()
 	result.append_array(salt)
 	result.append_array(nonce)
-	result.append_array(key)
+	result.append_array(mac)
 	result.append_array(encrypted)
 	return result
 
 
 func _decrypt_data(encrypted_data: PackedByteArray) -> PackedByteArray:
-	if encrypted_data.size() < SALT_SIZE + NONCE_SIZE + KEY_SIZE:
+	if encrypted_data.size() < SALT_SIZE + NONCE_SIZE + 32:
 		push_error("Invalid encrypted data: too short")
 		return PackedByteArray()
-
+	
 	var salt := encrypted_data.slice(0, SALT_SIZE)
 	var nonce := encrypted_data.slice(SALT_SIZE, SALT_SIZE + NONCE_SIZE)
-	var key := encrypted_data.slice(SALT_SIZE + NONCE_SIZE, SALT_SIZE + NONCE_SIZE + KEY_SIZE)
-	var ciphertext := encrypted_data.slice(SALT_SIZE + NONCE_SIZE + KEY_SIZE)
-
-	var decrypted := _crypto.decrypt_aes(key, ciphertext)
+	var mac := encrypted_data.slice(SALT_SIZE + NONCE_SIZE, SALT_SIZE + NONCE_SIZE + 32)
+	var ciphertext := encrypted_data.slice(SALT_SIZE + NONCE_SIZE + 32)
+	
+	var key_hash := _sha256(_vault_key)
+	var mac_key := key_hash.slice(0, 16)
+	
+	# Verify integrity MAC
+	var mac_data := PackedByteArray()
+	mac_data.append_array(salt)
+	mac_data.append_array(nonce)
+	mac_data.append_array(ciphertext)
+	var expected_mac := _hmac_sha256(mac_key, mac_data)
+	
+	if not _constant_time_compare(mac, expected_mac):
+		push_error("MAC verification failed - data may be tampered")
+		return PackedByteArray()
+	
+	# Generate derived key
+	var derived_key := _hmac_sha256(mac_key, salt + nonce)
+	derived_key = derived_key.slice(0, KEY_SIZE)
+	
+	var crypto := _get_crypto()
+	var decrypted := crypto.decrypt_aes(derived_key, ciphertext)
 	if decrypted.is_empty():
 		push_error("Decryption failed")
 		return PackedByteArray()
+	
+	# Remove PKCS7 padding
+	return _pkcs7_unpad(decrypted)
 
-	return decrypted
+
+static func _pkcs7_pad(data: PackedByteArray, block_size: int) -> PackedByteArray:
+	var pad_len := block_size - (data.size() % block_size)
+	var padded := PackedByteArray()
+	padded.append_array(data)
+	for i in range(pad_len):
+		padded.append(pad_len)
+	return padded
+
+
+static func _pkcs7_unpad(data: PackedByteArray) -> PackedByteArray:
+	if data.is_empty():
+		return data
+	var pad_len := data[data.size() - 1]
+	if pad_len < 1 or pad_len > 16 or pad_len > data.size():
+		return data
+	# Verify all padding bytes
+	for i in range(pad_len):
+		if data[data.size() - 1 - i] != pad_len:
+			return data
+	return data.slice(0, data.size() - pad_len)
+
+
+static func _constant_time_compare(a: PackedByteArray, b: PackedByteArray) -> bool:
+	if a.size() != b.size():
+		return false
+	var result := 0
+	for i in range(a.size()):
+		result |= a[i] ^ b[i]
+	return result == 0
 
 
 func import_file(source_path: String) -> VaultEntry:
@@ -335,7 +410,7 @@ func secure_delete(uuid: String) -> bool:
 		var f := FileAccess.open(entry.encrypted_path, FileAccess.WRITE)
 		if f != null:
 			var size := f.get_length()
-			var garbage := _crypto.generate_random_bytes(size)
+			var garbage := _get_crypto().generate_random_bytes(size)
 			f.store_buffer(garbage)
 			f.close()
 
@@ -343,6 +418,158 @@ func secure_delete(uuid: String) -> bool:
 
 	index["entries"].erase(uuid)
 	return _save_index(index)
+
+
+func verify_vault_integrity() -> Dictionary:
+	# Verify integrity of all vault files
+	var index := _load_index()
+	var entries := index.get("entries", {})
+	var results := {
+		"total": 0,
+		"valid": 0,
+		"corrupted": 0,
+		"missing": 0,
+		"errors": []
+	}
+	
+	for uuid in entries:
+		results.total += 1
+		var entry := VaultEntry.from_dict(entries[uuid])
+		
+		if not FileAccess.file_exists(entry.encrypted_path):
+			results.missing += 1
+			results.errors.append("%s: File missing" % uuid)
+			continue
+		
+		var f := FileAccess.open(entry.encrypted_path, FileAccess.READ)
+		if f == null:
+			results.corrupted += 1
+			results.errors.append("%s: Could not open file" % uuid)
+			continue
+		
+		var encrypted := f.get_buffer(f.get_length())
+		f.close()
+		
+		# Try to decrypt to verify integrity
+		var decrypted := _decrypt_data(encrypted)
+		if decrypted.is_empty():
+			results.corrupted += 1
+			results.errors.append("%s: Decryption failed" % uuid)
+		else:
+			results.valid += 1
+	
+	return results
+
+
+func export_vault(export_path: String) -> bool:
+	# Export entire vault as encrypted archive
+	if not _ensure_initialized():
+		push_error("Vault not initialized")
+		return false
+	
+	var index := _load_index()
+	var entries := index.get("entries", {})
+	
+	var vault_data := {
+		"version": 1,
+		"exported_at": Time.get_unix_time_from_system(),
+		"entries": []
+	}
+	
+	for uuid in entries:
+		var entry := VaultEntry.from_dict(entries[uuid])
+		var entry_info := entry.to_dict()
+		
+		# Read and re-encrypt the file with a new nonce
+		if FileAccess.file_exists(entry.encrypted_path):
+			var f := FileAccess.open(entry.encrypted_path, FileAccess.READ)
+			if f != null:
+				var encrypted := f.get_buffer(f.get_length())
+				f.close()
+				entry_info["encrypted_data"] = Array(encrypted)  # Convert to array for JSON
+			else:
+				push_error("Failed to read: %s" % entry.encrypted_path)
+				return false
+		
+		vault_data.entries.append(entry_info)
+	
+	var json_string := JSON.stringify(vault_data, "\t")
+	var f := FileAccess.open(export_path, FileAccess.WRITE)
+	if f == null:
+		push_error("Failed to create export file")
+		return false
+	
+	# Encrypt the JSON with vault key
+	var json_bytes := json_string.to_utf8_buffer()
+	var encrypted_export := _encrypt_data(json_bytes)
+	if encrypted_export.is_empty():
+		push_error("Failed to encrypt export")
+		f.close()
+		DirAccess.remove_absolute(export_path)
+		return false
+	
+	f.store_buffer(encrypted_export)
+	f.close()
+	return true
+
+
+func import_vault(import_path: String) -> bool:
+	# Import vault from encrypted archive
+	if not _ensure_initialized():
+		push_error("Vault not initialized")
+		return false
+	
+	var f := FileAccess.open(import_path, FileAccess.READ)
+	if f == null:
+		push_error("Failed to open import file")
+		return false
+	
+	var encrypted := f.get_buffer(f.get_length())
+	f.close()
+	
+	var decrypted := _decrypt_data(encrypted)
+	if decrypted.is_empty():
+		push_error("Failed to decrypt vault archive")
+		return false
+	
+	var json_string := decrypted.get_string_from_utf8()
+	var json := JSON.new()
+	if json.parse(json_string) != OK:
+		push_error("Failed to parse vault archive")
+		return false
+	
+	if json.data.version != 1:
+		push_error("Unsupported vault archive version")
+		return false
+	
+	var vault_data := json.data
+	var index := _load_index()
+	var imported := 0
+	
+	for entry_data in vault_data.entries:
+		var uuid := entry_data.uuid
+		
+		# Skip if already exists
+		if index["entries"].has(uuid):
+			continue
+		
+		# Write encrypted file
+		var enc_data := PackedByteArray(entry_data.encrypted_data)
+		var dest_path := VAULT_DIR + uuid + ".vault"
+		var out_f := FileAccess.open(dest_path, FileAccess.WRITE)
+		if out_f == null:
+			push_error("Failed to create: %s" % dest_path)
+			continue
+		
+		out_f.store_buffer(enc_data)
+		out_f.close()
+		
+		# Update entry with correct path
+		entry_data.encrypted_path = dest_path
+		index["entries"][uuid] = entry_data
+		imported += 1
+	
+	return _save_index(index) and imported > 0
 
 
 func get_vault_entries() -> Array:

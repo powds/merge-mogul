@@ -9,15 +9,18 @@ signal lockout_started(seconds_remaining: int)
 signal lockout_ended()
 signal pin_changed_success()
 signal wrong_pin_attempt(attempts_remaining: int)
+signal break_in_alert(timestamp: String, photo_path: String)
 
 enum State { LOCKED, UNLOCKED, LOCKOUT }
 
 const CONFIG_PATH := "user://vault.cfg"
 const PIN_MIN_LENGTH := 4
 const PIN_MAX_LENGTH := 6
-const MAX_WRONG_ATTEMPTS := 3
+const MAX_WRONG_ATTEMPTS := 5
 const LOCKOUT_DURATION := 30
 const AUTO_LOCK_TIMEOUT := 60
+const BREAK_IN_LOG_PATH := "user://break_in_log.txt"
+const LOCKOUT_END_KEY := "vault_lockout_until"
 
 var _state: State = State.LOCKED
 var _pin_hash: String = ""
@@ -27,15 +30,23 @@ var _lockout_time_remaining: int = 0
 var _auto_lock_timer: float = 0
 var _is_decoy_unlocked: bool = false
 var _is_backgrounded: bool = false
+var _break_in_log_path: String = ""
 
 func _ready() -> void:
 	_load_vault_config()
 	_state = State.LOCKED
 	_auto_lock_timer = AUTO_LOCK_TIMEOUT
+	_break_in_log_path = BREAK_IN_LOG_PATH
+	_check_persistent_lockout()
 
 func _process(delta: float) -> void:
 	if _state == State.LOCKOUT:
-		pass
+		if _lockout_time_remaining > 0:
+			_lockout_time_remaining -= 1
+			lockout_started.emit(_lockout_time_remaining)
+		else:
+			_state = State.LOCKED
+			lockout_ended.emit()
 	elif _state == State.UNLOCKED:
 		_auto_lock_timer -= delta
 		if _auto_lock_timer <= 0:
@@ -116,17 +127,61 @@ func _handle_wrong_pin() -> void:
 	_wrong_attempts += 1
 	
 	if _wrong_attempts >= MAX_WRONG_ATTEMPTS:
+		_capture_break_in()
 		_start_lockout()
 	else:
 		var remaining := MAX_WRONG_ATTEMPTS - _wrong_attempts
 		wrong_pin_attempt.emit(remaining)
 
-func _start_lockout() -> void:
-	_state = State.LOCKOUT
-	_lockout_time_remaining = LOCKOUT_DURATION
-	_wrong_attempts = 0
-	lockout_started.emit(LOCKOUT_DURATION)
-	_lockout_countdown()
+func _capture_break_in() -> void:
+	var timestamp := Time.get_datetime_string_from_system()
+	var safe_ts := timestamp.replace(":", "-").replace("T", "_")
+	var screenshot_path := "user://break_in_%s.png" % safe_ts
+	
+	# Capture screenshot using viewport
+	var img := get_viewport().get_texture().get_image()
+	if img:
+		img.save_png(screenshot_path)
+	
+	# Log the break-in attempt
+	_log_break_in_attempt(timestamp, screenshot_path)
+	break_in_alert.emit(timestamp, screenshot_path)
+
+func _log_break_in_attempt(timestamp: String, photo_path: String) -> void:
+	var log_entry := "BREAK-IN %s | Photo: %s\n" % [timestamp, photo_path]
+	
+	var file := FileAccess.open(_break_in_log_path, FileAccess.READ_WRITE)
+	if file:
+		file.seek_end()
+		file.store_string(log_entry)
+		file.close()
+
+func _check_persistent_lockout() -> void:
+	var lockout_end := _get_persistent_lockout_end()
+	if lockout_end > 0:
+		var now := Time.get_unix_time_from_system()
+		if now < lockout_end:
+			_state = State.LOCKOUT
+			_lockout_time_remaining = int(lockout_end - now)
+			lockout_started.emit(_lockout_time_remaining)
+			_lockout_countdown()
+		else:
+			_clear_persistent_lockout()
+
+func _get_persistent_lockout_end() -> int:
+	var save_data := SaveSystem.load_game()
+	return save_data.get(LOCKOUT_END_KEY, 0)
+
+func _save_persistent_lockout(end_time: int) -> void:
+	var save_data := SaveSystem.load_game()
+	save_data[LOCKOUT_END_KEY] = end_time
+	SaveSystem.save_game(save_data)
+
+func _clear_persistent_lockout() -> void:
+	var save_data := SaveSystem.load_game()
+	if save_data.has(LOCKOUT_END_KEY):
+		save_data.erase(LOCKOUT_END_KEY)
+		SaveSystem.save_game(save_data)
 
 func _lockout_countdown() -> void:
 	while _lockout_time_remaining > 0:
@@ -135,7 +190,17 @@ func _lockout_countdown() -> void:
 		lockout_started.emit(_lockout_time_remaining)
 	
 	_state = State.LOCKED
+	_clear_persistent_lockout()
 	lockout_ended.emit()
+
+func _start_lockout() -> void:
+	_state = State.LOCKOUT
+	_lockout_time_remaining = LOCKOUT_DURATION
+	_wrong_attempts = 0
+	var lockout_end := Time.get_unix_time_from_system() + LOCKOUT_DURATION
+	_save_persistent_lockout(lockout_end)
+	lockout_started.emit(LOCKOUT_DURATION)
+	_lockout_countdown()
 
 func set_pin(new_pin: String, is_decoy: bool = false) -> bool:
 	if new_pin.length() < PIN_MIN_LENGTH or new_pin.length() > PIN_MAX_LENGTH:

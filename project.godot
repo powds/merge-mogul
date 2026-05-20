@@ -14,7 +14,7 @@ config/name="MergeMogul"
 config/description="Android Game + Utility Hybrid - Merge game with file manager, gallery, app launcher, and hidden vault."
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="res://icon.png"
 
 [autoload]
 

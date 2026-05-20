@@ -28,7 +28,10 @@ var level: int = 1
 var current_xp: int = 0:
 	set(value):
 		current_xp = value
-		xp_changed.emit(current_xp, xp_to_next_level())
+		if not _level_up_in_progress:
+			xp_changed.emit(current_xp, xp_to_next_level())
+
+var _level_up_in_progress := false
 
 # XP curve constants
 const XP_BASE: int = 100
@@ -42,10 +45,13 @@ func xp_to_next_level() -> int:
 	return int(XP_BASE * pow(XP_MULTIPLIER, level - 1))
 
 func _check_level_up() -> void:
+	_level_up_in_progress = true
 	while current_xp >= xp_to_next_level():
 		current_xp -= xp_to_next_level()
 		level += 1
+		xp_changed.emit(current_xp, xp_to_next_level())
 		level_up.emit(level)
+	_level_up_in_progress = false
 
 # Game state methods
 func start_game() -> void:
@@ -91,9 +97,9 @@ func _load_game() -> void:
 	_check_level_up()
 
 func save_game() -> void:
-	var data := {
-		"coins": coins,
-		"level": level,
-		"current_xp": current_xp
-	}
+	# Merge with existing save data to preserve other fields (achievements, vault data)
+	var data := SaveSystem.load_game()
+	data["coins"] = coins
+	data["level"] = level
+	data["current_xp"] = current_xp
 	SaveSystem.save_game(data)
