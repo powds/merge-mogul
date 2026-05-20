@@ -16,6 +16,9 @@
 - `scenes/` - Game scenes
 - `assets/` - Game assets
 
+### Repository
+- GitHub: https://github.com/powds/merge-mogul
+
 ### Next Steps
 - Implement core merge mechanics
 - Build UI system
